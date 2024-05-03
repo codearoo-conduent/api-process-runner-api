@@ -14,6 +14,46 @@ namespace api_process_runner_api.Util
         // Phone # updated from 8045055319 to 2512271296
         // Address updated from 6608 zW 124TH ST  OKLAHOMA CITY OK 73142 to 205 qfGzfLlf fVE  EVERGREEN AL 36401
 
+        private string _promptActivityConclusion = @"PersonID: {{$personid}}
+        {{$query}}
+
+         Return the Verificaiton Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication properties. 
+         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verificaiton' before VerficationsCompleted can be set to 'Yes',
+         otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
+        [JSON]
+               {{
+                  'PersonID': '12345',
+                  'ActivityRelatedTo' : '<activity related to>',
+                  'FormOfAuthentication' : '<form of authentication>',
+                  'VerificationsCompleted' : <verifications completed>
+                }}
+               }}
+        [JSON END]
+
+        [Examples for JSON Output]
+             {{ 
+                'PersonID': '12345',
+                'ActivityRelatedTo' : 'Inbound Call',
+                'FormOfAuthentication' : 'KBA',
+                'VerificationsCompleted': 'Yes'
+             }}
+             {{ 
+                'PersonID': '12345',
+                'ActivityRelatedto' : 'Inbound Call',
+                'FormOfAuthentication' : 'ID Verfication',
+                'VerificationsCompleted': 'Yes'
+             }}
+             {{ 
+                'PersonID': '12345',
+                'ActivityRelatedto' : 'Inbound Call',
+                'FormOfAuthentication' : 'Low Risk',
+                'VerificationsCompleted': 'No'
+             }}
+ 
+        Per user query what is the Verification Conclusion?";
+
+
+
         private string _promptFraudConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
@@ -74,6 +114,32 @@ namespace api_process_runner_api.Util
         }
 
         Per use query what is the Action Conclusion?";
+
+
+        public async Task<string> CheckVerificationIntentAsync(Kernel kernel, string personid, string query)
+        {   // This function is used for verifying step 3.  
+            // Activities related to: Inbound call (has to happen) && (Form of Auth: Id Verification OR Form of Auth: KBA)
+           #pragma warning disable SKEXP0010
+
+            var executionSettings = new OpenAIPromptExecutionSettings()
+            {
+                ResponseFormat = "json_object", // setting JSON output mode
+            };
+
+            KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
+            string result = "";
+            try
+            {
+                // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
+                var response = await kernel.InvokePromptAsync(_promptActivityConclusion, arguments2);
+                result = response.GetValue<string>() ?? "";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return result ?? "";
+        }
 
         public async Task<string> CheckFraudIntentAsync(Kernel kernel, string personid, string query)
         {

@@ -29,36 +29,21 @@ public class StepLogger
 
     public void AddItem(EppicRecord record, string stepnumber, string steptitle, string status)
     {
-        ProcessStep step = new ProcessStep
-        {
-            Title = $"Step {i} - {steptitle}",
-            Status = status,
-            EppicRecords = new List<EppicRecord> {  new EppicRecord
-                    {
-                        PersonID? = record.PersonID,
-                        Phone_Number = record.Phone_Number}",
-                        AddressLine1 = record.AddressLine1,
-                        AddressLine2 = record.AddressLine2,
-                        City = record.City,
-                        State = record.State,
-                        ZipCode = record.ZipCode
-                    }
-        };
+        //ProcessStep step = new ProcessStep
+        //{
+        //    Title = $"Step {i} - {steptitle}",
+        //    Status = status,
+        //    EppicRecords = new List<EppicRecord> {  new EppicRecord
+        //            {
+        //                PersonID? = record.PersonID,
+        //                Phone_Number = record.Phone_Number}",
+        //                AddressLine1 = record.AddressLine1,
+        //                AddressLine2 = record.AddressLine2,
+        //                City = record.City,
+        //                State = record.State,
+        //                ZipCode = record.ZipCode
+        //            }
+        //};
     }
 
-
-    
-
-
-    public async Task<bool> WriteToBlobAsync(Stream fileStream,string blobName)
-    {
-        // TBD: Try Catch 
-        var blobServiceClient = new BlobServiceClient(ConnectionString); 
-        var containerClient = blobServiceClient.GetBlobContainerClient(Container);  
-        await containerClient.CreateIfNotExistsAsync();
-        var blobClient = containerClient.GetBlobClient(blobName);
-        await blobClient.UploadAsync(fileStream, true);
-        return true;
-
-    }
 }
