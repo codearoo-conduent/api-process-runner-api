@@ -51,10 +51,10 @@ namespace api_process_runner_api.Helpers
         {
             //return hospitalrecords.FirstOrDefault(record => record.Phone_Number == phonenumber);
             return hospitalrecords.FirstOrDefault(record =>
-                    record.AddressLine1 == address1 &&
-                    record.AddressLine2 == address2 &&
-                    record.City == city &&
-                    record.State == state);
+                    string.Compare(record.AddressLine1, address1, ignoreCase: true) == 0 &&
+                    string.Compare(record.AddressLine2, address2, ignoreCase: true) == 0 &&
+                    string.Compare(record.City, city, ignoreCase: true) == 0 &&
+                    string.Compare(record.State, state, ignoreCase: true) == 0);
         }
 
     }
