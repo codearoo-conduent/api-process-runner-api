@@ -42,11 +42,9 @@ namespace api_process_runner_api.Controllers
                 var result = await dataHelper.Intialize();
                 var hospitaldataRecords = dataHelper.HospitalDataRecords;
                 Console.WriteLine("Ready to Go, let's search for a HospitalByFullAddress. Press Enter!");
-                Console.ReadLine();
                 var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("799 47dH bd", "", "SAN DIEGO", "CA", hospitaldataRecords ?? new List<HospitalShelterRecords>());
                 Console.WriteLine($@"Hospital Found: {recordswithFullAddress?.AddressLine1}");
                 Console.WriteLine("Let's print out all the Hospital Records, press  Enter!");
-                Console.ReadLine();
                 dataHelper.HospitalShelterDataParser.PrintHospitalRecords(hospitaldataRecords ?? new List<HospitalShelterRecords>());
                 Console.WriteLine();
                 var response = "all good";
