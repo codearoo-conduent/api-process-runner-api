@@ -25,7 +25,8 @@ public async Task<StreamReader> GetStreamReaderFromBlob(string fileName)
     var blobClient = containerClient.GetBlobClient(fileName);
 
     // Download blob content as a stream asynchronously
-    using (var stream = new MemoryStream())
+    //using (var stream = new MemoryStream())
+    var stream = new MemoryStream();
     {
         await blobClient.DownloadToAsync(stream);
 
