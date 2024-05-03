@@ -2,9 +2,12 @@
 {
     internal static class Helper
     {
+        private static IConfiguration configuration
+            = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("local.settings.json").Build();
+
         public static string GetEnvironmentVariable(string variableName)
         {
-            return Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Process) ?? "";
+            return configuration[variableName] ?? "";
         }
 
         public static string GetSqlConnectionString(string name)
