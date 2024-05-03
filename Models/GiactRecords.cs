@@ -11,14 +11,14 @@ namespace api_process_runner_api.Models
     public class GiactRecords
     {
         public string? UniqueID;
-        public string? AddressLine1;
-        public string? City;
-        public string? State;
-        public string? ZipCode;
-        public string? AddressCurrentPast;
-        public string? CityCurrentPast;
-        public string? StateCurrentPast;
-        public string? ZipCodeCurrentPast;
+        public string? AddressCurrent; // AddressLine1
+        public string? CityCurrent;
+        public string? StateCurrent;
+        public string? ZipCodeCurrent;
+        public string? AddressPast; // AddressLine19
+        public string? CityPast;
+        public string? StatePast;
+        public string? ZipCodePast;
         public string? Status;
         public string? Classification;
         public string? NumberType;

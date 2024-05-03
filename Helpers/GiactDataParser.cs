@@ -37,7 +37,7 @@ namespace api_process_runner_api.Helpers
             foreach (var recordGiact in recordsGiact)
             {
                 count++;
-                Console.WriteLine($@"Record# {count} UniqueID: {recordGiact.UniqueID} AddressLine1: {recordGiact.AddressLine1} City: {recordGiact.City} State: {recordGiact.State} ZipCode: {recordGiact.ZipCode} AddressCurrentPast: {recordGiact.AddressCurrentPast} CityCurrentPast: {recordGiact.CityCurrentPast} Status: {recordGiact.Status}");
+                Console.WriteLine($@"Record# {count} UniqueID: {recordGiact.UniqueID} AddressLine1: {recordGiact.AddressCurrent} City: {recordGiact.CityCurrent} State: {recordGiact.StateCurrent} ZipCode: {recordGiact.ZipCodeCurrent} AddressCurrentPast: {recordGiact.AddressPast} CityCurrentPast: {recordGiact.CityPast} Status: {recordGiact.Status}");
             }
         }
 
@@ -48,21 +48,21 @@ namespace api_process_runner_api.Helpers
 
         public GiactRecords? FindGiactByAddressLine1(string address, List<GiactRecords> giactrecords)
         {
-            return giactrecords.FirstOrDefault(record => record.AddressLine1 == address);
+            return giactrecords.FirstOrDefault(record => record.AddressCurrent == address);
         }
 
         public GiactRecords? FindGiactByAddressCurrentPast(string addresscurrentpast, List<GiactRecords> giactrecords)
         {
-            return giactrecords.FirstOrDefault(record => record.AddressCurrentPast == addresscurrentpast);
+            return giactrecords.FirstOrDefault(record => record.AddressPast == addresscurrentpast);
         }
 
         public GiactRecords? FindGiactByFullAddress(string addressline1, string city, string state, string zipcode, List<GiactRecords> giactrecords)
         { // Eppic Address1, Address2, CITY, STATE, ZIP
            return giactrecords.FirstOrDefault(record =>
-                    record.AddressLine1 == addressline1 &&
-                    record.City == city &&
-                    record.State == state &&
-                    record.ZipCode == zipcode);
+                    record.AddressCurrent == addressline1 &&
+                    record.CityCurrent == city &&
+                    record.StateCurrent == state &&
+                    record.ZipCodeCurrent == zipcode);
         }
 
     }

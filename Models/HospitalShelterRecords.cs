@@ -17,6 +17,6 @@ namespace api_process_runner_api.Models
 
         // some extra fields in the file which we don't care about
         [FieldOptional]
-        public string[]? OtherJunk { get; set; }
+        public string[] OtherJunk { get; set; }
     }
 }

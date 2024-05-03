@@ -16,6 +16,9 @@ namespace api_process_runner_api.Helpers
         public static List<GiactRecords>? giactRecords;
         public static IEnumerable<EppicRecords>? inputEppicRecordsInHospitalDB;
         public static IEnumerable<EppicRecords>? inputEppicRecordsNotInHospitalDB;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsMatchedGiactAddress;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsNotMatchedGiactAddress;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsMatchingGiactPhoneNumber;
     }
 
     internal class DataHelper
@@ -105,22 +108,11 @@ namespace api_process_runner_api.Helpers
                     {
                         _hospitalShelterDataParser.LoadData(stream);
                     }
-                    _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
-                    _eppicdataRecords = _eppicDataParser.ParseCsv();
-                    _siebeldataRecords = _siebelDataParser.ParseCsv();
-                    _giactdataRecords = _giactDataParser.ParseCsv();
-                    Globals.hospitalRecords = _hospitaldataRecords;
-                    Globals.eppicRecords = _eppicdataRecords;
-                    Globals.siebelRecords = _siebeldataRecords;
-                    Globals.giactRecords = _giactdataRecords;
-                    Step1_BuildEppicListWithMatchesInHospital();
-                    Step1_BuildEppicListWithoutInAgainstHospital();
-                    result = "Success";
                 }
                 catch (Exception e) 
                 { 
                     Console.WriteLine(e.ToString());
-                    return result = "Failed to load stream";
+                    throw;
                 }
 
             }
@@ -149,24 +141,29 @@ namespace api_process_runner_api.Helpers
                     {
                         _giactDataParser.LoadData(stream);
                     }
-                    _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
-                    _eppicdataRecords = _eppicDataParser.ParseCsv();
-                    _siebeldataRecords = _siebelDataParser.ParseCsv();
-                    _giactdataRecords = _giactDataParser.ParseCsv();
-                    Globals.hospitalRecords = _hospitaldataRecords;
-                    Globals.eppicRecords = _eppicdataRecords;
-                    Globals.siebelRecords = _siebeldataRecords;
-                    Globals.giactRecords = _giactdataRecords;
-                    Step1_BuildEppicListWithMatchesInHospital();
-                    Step1_BuildEppicListWithoutInAgainstHospital();
-                    result = "Success";
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
-                    return result = "Failed to load stream";
+                    throw;
                 }
             }
+
+            _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
+            _eppicdataRecords = _eppicDataParser.ParseCsv();
+            _siebeldataRecords = _siebelDataParser.ParseCsv();
+            _giactdataRecords = _giactDataParser.ParseCsv();
+            Globals.hospitalRecords = _hospitaldataRecords;
+            Globals.eppicRecords = _eppicdataRecords;
+            Globals.siebelRecords = _siebeldataRecords;
+            Globals.giactRecords = _giactdataRecords;
+            Step1_BuildEppicListWithMatchesInHospital();
+            Step1_BuildEppicListWithoutInAgainstHospital();
+            Step2_BuildEppicListMatchingGiactAddresses();
+            Step2_BuildEppicListNotMatchingGiactAddresses();
+            Step3_BuildEppicListMatchingGiactPhoneNumber();
+            result = "Success";
+
             return result;
         }
 
@@ -213,6 +210,68 @@ namespace api_process_runner_api.Helpers
             {
                 // Handle the case when Globals.hospitalRecords is null
                 // For example, log a warning or provide a default value
+            }
+        }
+
+        public void Step2_BuildEppicListMatchingGiactAddresses()
+        {
+            Console.WriteLine($"Total Eppic records: {Globals.inputEppicRecordsNotInHospitalDB?.Count()}");
+
+            if (Globals.inputEppicRecordsNotInHospitalDB != null && Globals.giactRecords != null)
+            {
+
+                Globals.inputEppicRecordsMatchedGiactAddress = (
+                    from e in Globals.inputEppicRecordsNotInHospitalDB
+                    join g in Globals.giactRecords on e.PersonID equals g.UniqueID
+                    where string.Compare(e.AddressLine1?.Trim(), g.AddressCurrent?.Trim(), ignoreCase: true) == 0
+                    where string.Compare(e.City?.Trim(), g.CityCurrent?.Trim(), ignoreCase: true) == 0
+                    where string.Compare(e.ZipCode?.Trim(), g.ZipCodeCurrent?.Trim(), ignoreCase: true) == 0
+                    select e).Distinct();
+
+                Globals.inputEppicRecordsMatchedGiactAddress = Globals.inputEppicRecordsMatchedGiactAddress.Concat((
+                    from e in Globals.inputEppicRecordsNotInHospitalDB
+                    join g in Globals.giactRecords on e.PersonID equals g.UniqueID
+                    where string.Compare(e.AddressLine1, g.AddressPast, ignoreCase: true) == 0
+                    where string.Compare(e.City, g.CityPast, ignoreCase: true) == 0
+                    where string.Compare(e.ZipCode, g.ZipCodePast, ignoreCase: true) == 0
+                    select e).Distinct()
+                    );
+
+                Globals.inputEppicRecordsMatchedGiactAddress = Globals.inputEppicRecordsMatchedGiactAddress.Distinct();
+
+                Console.WriteLine($"Recs matching a current or past address in Giact: { Globals.inputEppicRecordsMatchedGiactAddress.Count() } ");
+            }
+        }
+
+        public void Step2_BuildEppicListNotMatchingGiactAddresses()
+        {
+            Console.WriteLine($"Total Eppic records: {Globals.inputEppicRecordsNotInHospitalDB?.Count()}");
+
+            if (Globals.inputEppicRecordsNotInHospitalDB != null && Globals.inputEppicRecordsMatchedGiactAddress != null)
+            {
+                Globals.inputEppicRecordsNotMatchedGiactAddress =
+                    Globals.inputEppicRecordsNotInHospitalDB.Except(Globals.inputEppicRecordsMatchedGiactAddress);
+
+                Console.WriteLine($"Recs not matching in Giact addresses: {Globals.inputEppicRecordsNotMatchedGiactAddress.Count()} ");
+            }
+        }
+
+        public void Step3_BuildEppicListMatchingGiactPhoneNumber()
+        {
+            Console.WriteLine($"Total Eppic records: {Globals.inputEppicRecordsNotInHospitalDB?.Count()}");
+
+            if (Globals.inputEppicRecordsNotInHospitalDB != null && Globals.giactRecords != null)
+            {
+
+                Globals.inputEppicRecordsMatchingGiactPhoneNumber = (
+                    from e in Globals.inputEppicRecordsNotInHospitalDB
+                    join g in Globals.giactRecords on e.PersonID equals g.UniqueID
+                    where string.Compare(e.Phone_Number?.Trim(), g.PhoneNumber?.Trim(), ignoreCase: true) == 0
+                    select e).Distinct();
+
+                Globals.inputEppicRecordsMatchingGiactPhoneNumber = Globals.inputEppicRecordsMatchingGiactPhoneNumber.Distinct();
+
+                Console.WriteLine($"Recs matching a current or past phone number in Giact: {Globals.inputEppicRecordsMatchingGiactPhoneNumber.Count()} ");
             }
         }
 
