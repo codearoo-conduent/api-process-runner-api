@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using api_process_runner_api.Models;
 using api_process_runner_api.Helpers;
+using Microsoft.SemanticKernel;
+using api_process_runner_api.Util;
 
 namespace api_process_runner_api.Controllers
 {
@@ -8,16 +10,12 @@ namespace api_process_runner_api.Controllers
     [Route("[controller]")]
     public class ProcessRunnerController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
         private readonly ILogger<ProcessRunnerController> _logger;
-
-        public ProcessRunnerController(ILogger<ProcessRunnerController> logger)
+        private readonly Kernel _kernel;
+        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel)
         {
             _logger = logger;
+            _kernel = kernel;
         }
 
 
@@ -25,7 +23,13 @@ namespace api_process_runner_api.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         public async Task<ActionResult> LaunchProcess([FromBody] UploadedFilesRequest filesrequest)
-        { 
+        {
+            // Hard coding these values so I do not have to manually enter them in the Swagger UI
+            // This can be removed later, need this to test the SK stuff.
+            filesrequest.EppicFilename = "EPPIC.20231107.CSV";
+            filesrequest.SiebelFilename = "Siebel.20231107.CSV";
+            filesrequest.GiactFilename = "GIACT202131107.CSV";
+            filesrequest.AddressFilename = "Hospital-Shelters.20231107.csv";
             try
             {
                 if (filesrequest == null)
@@ -47,6 +51,18 @@ namespace api_process_runner_api.Controllers
                 Console.WriteLine("Let's print out all the Hospital Records, press  Enter!");
                 dataHelper.HospitalShelterDataParser.PrintHospitalRecords(hospitaldataRecords ?? new List<HospitalShelterRecords>());
                 Console.WriteLine();
+
+                // Let's test the Step 3 verification
+                CallLogChecker callLogChecker = new CallLogChecker();
+                // get a ref to the sibeldataRecords first
+                var siebeldataRecords = dataHelper.SiebelDataRecords;
+                // get a record with callnotes
+                var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID("5094334");
+                var verificationsCompletedResult1 = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+
+                var verificationsCompletedResult2 = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                Console.WriteLine(verificationsCompletedResult1);
+
                 var response = "all good";
                 return new OkObjectResult(response);
             }

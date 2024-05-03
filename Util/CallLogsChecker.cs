@@ -18,37 +18,37 @@ namespace api_process_runner_api.Util
         {{$query}}
 
          Return the Verificaiton Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication properties. 
-         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verificaiton' before VerficationsCompleted can be set to 'Yes',
-         otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
+         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verificaiton' before VerficationsCompleted can be set to 'Yes', otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
         [JSON]
-               {{
+               {
                   'PersonID': '12345',
                   'ActivityRelatedTo' : '<activity related to>',
                   'FormOfAuthentication' : '<form of authentication>',
                   'VerificationsCompleted' : <verifications completed>
-                }}
-               }}
+               }
         [JSON END]
 
         [Examples for JSON Output]
-             {{ 
+             {
                 'PersonID': '12345',
                 'ActivityRelatedTo' : 'Inbound Call',
                 'FormOfAuthentication' : 'KBA',
                 'VerificationsCompleted': 'Yes'
-             }}
-             {{ 
+             }
+
+             { 
                 'PersonID': '12345',
                 'ActivityRelatedto' : 'Inbound Call',
                 'FormOfAuthentication' : 'ID Verfication',
                 'VerificationsCompleted': 'Yes'
-             }}
-             {{ 
+             }
+
+             { 
                 'PersonID': '12345',
                 'ActivityRelatedto' : 'Inbound Call',
                 'FormOfAuthentication' : 'Low Risk',
                 'VerificationsCompleted': 'No'
-             }}
+             }
  
         Per user query what is the Verification Conclusion?";
 
@@ -59,21 +59,21 @@ namespace api_process_runner_api.Util
 
          Return the Fraud Conclusion intent of the query. The Fraud Conclusion must be in the format of JSON that consists of FraudConclusionNotes, FraudConclusionType, Recommendation properties. The FraudConclusionNotes should a short summary based on your review of the query.  The FraudConclusionType should be either 'No Fraud Detected' or 'Possible Account Takeover'.  The Recommendation should be your recommendations for futher action based on your conclusions. The JSON format should be:
         [JSON]
-               {{
+               {
                   'PersonID': '12345',
                   'FraudConclusionNotes': '<conclusion>',
                   'FraudConclusionType' : 'No Fraud Detected',
                   'Recommendation': <recommendation>'
-               }}
+               }
         [JSON END]
 
         [Examples for JSON Output]
-             {{ 
+             { 
               'PersonID':'12345', 
              'FraudConclusionNotes': 'There are multiple red flags suggesting potential fraud, including changes in contact information, inquiries about card information and transaction history, alert updates indicating possible account takeover',
              'FraudConclusionType': 'Account Takeover'
              'Recommendation': 'Further investigation and monitoring of the account are warranted to confirm fraudulent activity.'
-             }}
+             }
  
         Per user query what is the Fraud Conclusion?";
 
