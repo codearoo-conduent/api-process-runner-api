@@ -12,37 +12,33 @@ namespace api_process_runner_api.Controllers
     {
         private readonly ILogger<ProcessRunnerController> _logger;
         private readonly Kernel _kernel;
-        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel)
+        private readonly UploadedFilesRequest? _filesrequest;
+        private readonly bool _debugging = true;
+        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest)
         {
             _logger = logger;
             _kernel = kernel;
+            _filesrequest = uploadedfilesrequest;
         }
 
 
-        [HttpPost()] // Pass the 4 Files that were uploaded
+        [HttpGet("StartProcessing")] // Pass the 4 Files that were uploaded
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult> LaunchProcess([FromBody] UploadedFilesRequest filesrequest)
+        public async Task<ActionResult> ProcessRunner()
         {
-            // Hard coding these values so I do not have to manually enter them in the Swagger UI
-            // This can be removed later, need this to test the SK stuff.
-            filesrequest.EppicFilename = "EPPIC.20231107.CSV";
-            filesrequest.SiebelFilename = "Siebel.20231107.CSV";
-            filesrequest.GiactFilename = "GIACT202131107.CSV";
-            filesrequest.AddressFilename = "Hospital-Shelters.20231107.csv";
             try
             {
-                if (filesrequest == null)
-                {
-                    return BadRequest(filesrequest);
-                }
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
-                // Load the Data
-                // Siebel.20231107.CSV
-                // Hospital-Shelters.20231107.csv
-                // GIACT202131107.CSV
-                // EPPIC.20231107.CSV
-                DataHelper dataHelper = new DataHelper(filesrequest, _blobConnection, true);
+
+                DataHelper dataHelper;
+                if (_filesrequest != null) {
+                    dataHelper = new DataHelper(_filesrequest , _blobConnection, true);
+                }
+                else
+                {
+                    return BadRequest("Issue with File Detals!");
+                }
                 var result = await dataHelper.Intialize();
                 var hospitaldataRecords = dataHelper.HospitalDataRecords;
                 Console.WriteLine("Ready to Go, let's search for a HospitalByFullAddress. Press Enter!");
@@ -61,7 +57,7 @@ namespace api_process_runner_api.Controllers
                 var verificationsCompletedResult1 = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
 
                 var verificationsCompletedResult2 = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
-                Console.WriteLine(verificationsCompletedResult1);
+                Console.WriteLine(verificationsCompletedResult2);
 
                 var response = "all good";
                 return new OkObjectResult(response);
@@ -70,6 +66,40 @@ namespace api_process_runner_api.Controllers
             {
                 return BadRequest($"An error occured: {ex.Message}");
             }
+        }
+
+        [HttpPost("SendFileDetails")] // Pass the 4 Files that were uploaded
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        public ActionResult SendFileDetails([FromBody] UploadedFilesRequest filesrequest)
+        {
+            if (filesrequest != null && _filesrequest != null && filesrequest.SiebelFilename !="string")
+            {
+                // Hard coding these values so I do not have to manually enter them in the Swagger UI
+                // This can be removed later, need this to test the SK stuff.
+                _filesrequest.EppicFilename = filesrequest.EppicFilename;
+                _filesrequest.SiebelFilename = filesrequest.SiebelFilename;
+                _filesrequest.GiactFilename = filesrequest.GiactFilename;
+                _filesrequest.AddressFilename = filesrequest.AddressFilename;
+            } // Otherwise we assume the local files in the program.cs should be used.
+            
+            try
+            {
+                if (filesrequest == null)
+                {
+                    return BadRequest(filesrequest);
+                }
+                LogFileGenerator.GenerateLogFileName();
+
+                var response = LogFileGenerator.GenerateLogFileName();
+                return new OkObjectResult(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"An error occured: {ex.Message}");
+            }
+
+
         }
     }
 }

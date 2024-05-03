@@ -1,4 +1,6 @@
 using api_process_runner_api.Helpers;
+using api_process_runner_api.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,17 @@ builder.Services.AddTransient<Kernel>(s =>
         _apiKey
     );
     return builder.Build();
+});
+
+builder.Services.AddSingleton<UploadedFilesRequest>(provider =>
+{
+    return new UploadedFilesRequest
+    {
+        AddressFilename = "Hospital-Shelters.20231107.csv",
+        EppicFilename = "EPPIC.20231107.CSV",
+        GiactFilename = "GIACT202131107.CSV",
+        SiebelFilename = "Siebel.20231107.CSV"
+    };
 });
 
 var app = builder.Build();

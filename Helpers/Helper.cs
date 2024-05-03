@@ -42,4 +42,13 @@
             return conStr ?? "";
         }
     }
+    public class LogFileGenerator
+    {
+        public static string GenerateLogFileName()
+        {
+            DateTime today = DateTime.Today;
+            string logFileName = $"LogResults_{today.ToString("yyyy-MM-dd")}_{Guid.NewGuid().ToString().Substring(0, 8)}.json";
+            return logFileName;
+        }
+    }
 }
