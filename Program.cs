@@ -44,7 +44,7 @@ builder.Services.AddSingleton<StepsLogFile>(provider =>
 {
     return new StepsLogFile
     {
-      FileName = LogFileGenerator.GenerateLogFileName();
+      FileName = LogFileGenerator.GenerateLogFileName()
     };
 });
 

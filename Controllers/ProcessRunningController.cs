@@ -41,7 +41,7 @@ namespace api_process_runner_api.Controllers
                 var response ="Nothing has ran yet!";
                 
                 if (_filesrequest != null) {
-                    dataHelper = new DataHelper(_filesrequest , _blobConnection, true);
+                    dataHelper = new DataHelper(_filesrequest , _blobConnection, true, _kernel);
                     dataHelper?.ClearCollections(); // Clear All collections just to make sure data does not linger across runs.
                 }
                 else

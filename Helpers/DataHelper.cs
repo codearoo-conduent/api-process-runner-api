@@ -23,6 +23,7 @@ namespace api_process_runner_api.Helpers
     internal class DataHelper
     {
         private BlobHelper _blobHelper;
+        private Kernel _kernel;
         private int _countofRecords = 0;
         private bool _usingLocalFiles;
         private UploadedFilesRequest _uploadedFilesRequest;
@@ -68,9 +69,10 @@ namespace api_process_runner_api.Helpers
             get { return _giactdataRecords; }
         }
 
-        public DataHelper(UploadedFilesRequest uploadedFilesRequest,string blobconnectionstring, bool usingLocalFiles) 
+        public DataHelper(UploadedFilesRequest uploadedFilesRequest,string blobconnectionstring, bool usingLocalFiles, Kernel kernel) 
         {
             _usingLocalFiles = usingLocalFiles; 
+            _kernel = kernel;
             _uploadedFilesRequest = uploadedFilesRequest;
             _blobHelper = new BlobHelper()
             {
@@ -276,7 +278,7 @@ namespace api_process_runner_api.Helpers
             }
             catch (Exception ex)
             {
-                var errormsg = $"Issue running the tests. Exception: {ex.ToString()}"
+                var errormsg = $"Issue running the tests. Exception: {ex.ToString()}";
                 Console.WriteLine(errormsg);
                 return errormsg;
             }
