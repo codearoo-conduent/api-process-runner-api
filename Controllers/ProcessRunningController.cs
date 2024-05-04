@@ -13,18 +13,22 @@ namespace api_process_runner_api.Controllers
         private readonly ILogger<ProcessRunnerController> _logger;
         private readonly Kernel _kernel;
         private readonly UploadedFilesRequest? _filesrequest;
+        private readonly StepsLogFile _logfile;
+
         private readonly bool _debugging = true;
-        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest)
+        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest, StepsLogFile stepslogfile)
         {
             _logger = logger;
             _kernel = kernel;
             _filesrequest = uploadedfilesrequest;
+            _logfile = stepslogfile;
         }
 
 
         [HttpGet("StartProcessing")] // Pass the 4 Files that were uploaded
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public async Task<ActionResult> ProcessRunner()
         {
             // we need to clear out all the collections after each completion otherwise the collection will get larger as long as the process lives.
@@ -34,6 +38,7 @@ namespace api_process_runner_api.Controllers
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
 
                 DataHelper dataHelper;
+                var response ="Nothing has ran yet!";
                 
                 if (_filesrequest != null) {
                     dataHelper = new DataHelper(_filesrequest , _blobConnection, true);
@@ -43,51 +48,20 @@ namespace api_process_runner_api.Controllers
                 {
                     return BadRequest("Issue with File Detals!");
                 }
-                var result = await dataHelper.Intialize();
-                var hospitaldataRecords = dataHelper.HospitalDataRecords;
-                Console.WriteLine("Ready to Go, let's search for a HospitalByFullAddress. Press Enter!");
-                var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("799 47dH bd", "", "SAN DIEGO", "CA", hospitaldataRecords ?? new List<HospitalShelterRecords>());
-                Console.WriteLine($@"Hospital Found: {recordswithFullAddress?.AddressLine1}");
-                Console.WriteLine("Let's print out all the Hospital Records, press  Enter!");
-                dataHelper.HospitalShelterDataParser.PrintHospitalRecords(hospitaldataRecords ?? new List<HospitalShelterRecords>());
-                Console.WriteLine();
-
-                var eppicdataRecords = dataHelper.EppicDataRecords;
-                Console.WriteLine("Ready to Go, let's search for a Eppic PersonID. Press Enter!");
-                var recordMatchedPersonID = dataHelper.EppicDataParser.FindEppicPersonID("5094334", eppicdataRecords ?? new List<EppicRecords>());
-                Console.WriteLine($@"PersonID Found: {recordMatchedPersonID?.PersonID}");
-                Console.WriteLine("Let's print out all the Eppic Records, press  Enter!");
-                dataHelper.EppicDataParser.PrintEppicRecords(eppicdataRecords ?? new List<EppicRecords>());
-                Console.WriteLine();
-
-                // Let's test the Step 3 verification
-                CallLogChecker callLogChecker = new CallLogChecker();
-                // get a ref to the sibeldataRecords first
-                var siebeldataRecords = dataHelper.SiebelDataRecords;
-                // get a record with callnotes
-                var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID("5094334");
-                var verificationsCompletedResult1 = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
-
-                var verificationsCompletedResult2 = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
-                Console.WriteLine(verificationsCompletedResult2);
-
-                // Test the Step Logger  Let's Add the Eppic Items that Failed Step 1
-                // There are not Eppic Items that have a Match in Hospital DB so no need to test
-                // So there are no records that match Hospital Address so nothing will be added!
-                StepLogger stepLogger = new StepLogger();
-                if (Globals.inputEppicRecordsNotInHospitalDB != null)
+                if (dataHelper != null)
                 {
-                    var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsNotInHospitalDB.ToList();
-                    foreach (var record in eppicRecordsNotInHospitalDB)
+                    var result = await dataHelper.Intialize();
+                    if (result == "Failed to load stream")
                     {
-                        // TBD Needs to be debugged it's printing out like 20 items when there are only 5
-                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
+                        return StatusCode(500, "An internal server error occurred trying to intialize the data!");
                     }
+                    // Comment out if you don't to test data and logic.  Update the RunTestOnData if you want to add additional logic.
+                    // Technically, all this should be done from xUnit/Mock but I don't have time for that.
+                    response = await dataHelper.RunTestsOnData(dataHelper);
+                    Console.WriteLine(response); 
+                    // Comment out the two lines about to not run the tests.
+                    // This is where we beed ti cakk ProcessRunnerSteps
                 }
-                // stepLogger.TestAddItems();  // This will add 10 test items to the Logger Collection
-                stepLogger.PrintItems();
-
-                var response = "all good";  // this needs to be fixed.
                 return new OkObjectResult(response);
             }
             catch (Exception ex)
@@ -114,12 +88,10 @@ namespace api_process_runner_api.Controllers
             {
                 if (filesrequest == null)
                 {
-                    return BadRequest(filesrequest);
+                    return BadRequest("Please pass a valid FileRequest in the Request Body!");
                 }
-                LogFileGenerator.GenerateLogFileName();  // return generated filename to client  TBD add DI for this so it can be shared across async functions and it needs to be cached.
-
-                var response = LogFileGenerator.GenerateLogFileName();
-                return new OkObjectResult(response);
+                _logfile.FileName = LogFileGenerator.GenerateLogFileName();  // return generated filename to client.  Shared across async methods
+                return new OkObjectResult(_logfile.FileName);
             }
             catch (Exception ex)
             {

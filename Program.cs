@@ -1,6 +1,7 @@
 using api_process_runner_api.Helpers;
 using api_process_runner_api.Models;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,15 @@ builder.Services.AddSingleton<UploadedFilesRequest>(provider =>
         EppicFilename = "EPPIC.20231107.CSV",
         GiactFilename = "GIACT202131107.CSV",
         SiebelFilename = "Siebel.20231107.CSV"
+    };
+});
+
+
+builder.Services.AddSingleton<StepsLogFile>(provider =>
+{
+    return new StepsLogFile
+    {
+      FileName = LogFileGenerator.GenerateLogFileName();
     };
 });
 

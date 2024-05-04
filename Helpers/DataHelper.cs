@@ -1,5 +1,7 @@
 ﻿using api_process_runner_api.Models;
 using api_process_runner_api.Util;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.SemanticKernel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -222,6 +224,62 @@ namespace api_process_runner_api.Helpers
             EppicDataRecords?.Clear();
             SiebelDataRecords?.Clear();
             GiactDataRecords?.Clear();
+        }
+
+        public async Task<string> RunTestsOnData(DataHelper dataHelper)
+        {
+            try
+            {
+                var hospitaldataRecords = dataHelper.HospitalDataRecords;
+                Console.WriteLine("Ready to Go, let's search for a HospitalByFullAddress. Press Enter!");
+                var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("799 47dH bd", "", "SAN DIEGO", "CA", hospitaldataRecords ?? new List<HospitalShelterRecords>());
+                Console.WriteLine($@"Hospital Found: {recordswithFullAddress?.AddressLine1}");
+                Console.WriteLine("Let's print out all the Hospital Records, press  Enter!");
+                dataHelper.HospitalShelterDataParser.PrintHospitalRecords(hospitaldataRecords ?? new List<HospitalShelterRecords>());
+                Console.WriteLine();
+
+                var eppicdataRecords = dataHelper.EppicDataRecords;
+                Console.WriteLine("Ready to Go, let's search for a Eppic PersonID. Press Enter!");
+                var recordMatchedPersonID = dataHelper.EppicDataParser.FindEppicPersonID("5094334", eppicdataRecords ?? new List<EppicRecords>());
+                Console.WriteLine($@"PersonID Found: {recordMatchedPersonID?.PersonID}");
+                Console.WriteLine("Let's print out all the Eppic Records, press  Enter!");
+                dataHelper.EppicDataParser.PrintEppicRecords(eppicdataRecords ?? new List<EppicRecords>());
+                Console.WriteLine();
+
+                // Let's test the Step 3 verification
+                CallLogChecker callLogChecker = new CallLogChecker();
+                // get a ref to the sibeldataRecords first
+                var siebeldataRecords = dataHelper.SiebelDataRecords;
+                // get a record with callnotes
+                var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID("5094334");
+                var verificationsCompletedResult1 = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+
+                var verificationsCompletedResult2 = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                Console.WriteLine(verificationsCompletedResult2);
+
+                // Test the Step Logger  Let's Add the Eppic Items that Failed Step 1
+                // There are not Eppic Items that have a Match in Hospital DB so no need to test
+                // So there are no records that match Hospital Address so nothing will be added!
+                StepLogger stepLogger = new StepLogger();
+                if (Globals.inputEppicRecordsNotInHospitalDB != null)
+                {
+                    var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsNotInHospitalDB.ToList();
+                    foreach (var record in eppicRecordsNotInHospitalDB)
+                    {
+                        // TBD Needs to be debugged it's printing out like 20 items when there are only 5
+                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
+                    }
+                }
+                // stepLogger.TestAddItems();  // This will add 10 test items to the Logger Collection
+                stepLogger.PrintItems();
+                return "All Tests have ran";
+            }
+            catch (Exception ex)
+            {
+                var errormsg = $"Issue running the tests. Exception: {ex.ToString()}"
+                Console.WriteLine(errormsg);
+                return errormsg;
+            }
         }
     }
 }
