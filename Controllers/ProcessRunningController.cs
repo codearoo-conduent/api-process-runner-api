@@ -34,8 +34,10 @@ namespace api_process_runner_api.Controllers
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
 
                 DataHelper dataHelper;
+                
                 if (_filesrequest != null) {
                     dataHelper = new DataHelper(_filesrequest , _blobConnection, true);
+                    dataHelper?.ClearCollections(); // Clear All collections just to make sure data does not linger across runs.
                 }
                 else
                 {

@@ -149,17 +149,6 @@ namespace api_process_runner_api.Helpers
                     {
                         _giactDataParser.LoadData(stream);
                     }
-                    _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
-                    _eppicdataRecords = _eppicDataParser.ParseCsv();
-                    _siebeldataRecords = _siebelDataParser.ParseCsv();
-                    _giactdataRecords = _giactDataParser.ParseCsv();
-                    Globals.hospitalRecords = _hospitaldataRecords;
-                    Globals.eppicRecords = _eppicdataRecords;
-                    Globals.siebelRecords = _siebeldataRecords;
-                    Globals.giactRecords = _giactdataRecords;
-                    Step1_BuildEppicListWithMatchesInHospital();
-                    Step1_BuildEppicListWithoutInAgainstHospital();
-                    result = "Success";
                 }
                 catch (Exception e)
                 {
@@ -216,9 +205,23 @@ namespace api_process_runner_api.Helpers
             }
         }
 
-        public static void LoadDataFiles()
+        public void ClearCollections()
         {
-
+            Globals.eppicRecords?.Clear();
+            Globals.hospitalRecords?.Clear();
+            Globals.siebelRecords?.Clear();
+            Globals.giactRecords?.Clear();
+            if (Globals.inputEppicRecordsNotInHospitalDB != null && Globals.inputEppicRecordsInHospitalDB != null)
+                {
+                    List<EppicRecords> eppicListNotIn = Globals.inputEppicRecordsNotInHospitalDB.ToList();
+                    eppicListNotIn.Clear();
+                    List<EppicRecords> eppicListIn = Globals.inputEppicRecordsInHospitalDB.ToList();
+                    eppicListIn.Clear();
+                }
+            HospitalDataRecords?.Clear();
+            EppicDataRecords?.Clear();
+            SiebelDataRecords?.Clear();
+            GiactDataRecords?.Clear();
         }
     }
 }
