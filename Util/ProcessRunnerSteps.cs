@@ -1,6 +1,9 @@
 ﻿using api_process_runner_api.Helpers;
 using api_process_runner_api.Models;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.SemanticKernel;
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,131 +26,118 @@ namespace api_process_runner_api.Util
         public StepResult? EppicSeibelOPTCallNotesResult { get; set; }   // Step 3a
         public string? MasterStatusCode { get; set; }                    // Pass or Fail
     }
-    public class ProcessRunnerSteps(EppicRecords eppicrecord, SiebelDataParser siebeldataparser, GiactDataParser giactdataparser, EppicDataParser eppicdataparser)
+    //  public class ProcessRunnerSteps(EppicRecords eppicrecord, SiebelDataParser siebeldataparser, GiactDataParser giactdataparser, EppicDataParser eppicdataparser)
+    internal class ProcessRunnerSteps(DataHelper datahelper, Kernel kernel)
     {
-        private EppicRecords _eppicrecord = eppicrecord;
-        private SiebelDataParser _siebeldataparser = siebeldataparser;
-        private GiactDataParser _giactdataparser = giactdataparser;
-        private EppicDataParser _eppicdataparser = eppicdataparser;
+        private DataHelper _datahelper = datahelper;
+        private Kernel _kernel = kernel;
+        //private EppicRecords _eppicrecord = eppicrecord;
+        //private SiebelDataParser _siebeldataparser = siebeldataparser;
+        //private GiactDataParser _giactdataparser = giactdataparser;
+        //private EppicDataParser _eppicdataparser = eppicdataparser;
 
-        public ProcessResult RunSteps()
+        //  public ProcessResult RunSteps()
+        public async Task<string> RunSteps()
         {
             var processResult = new ProcessResult();
             #region Step 1: Eppic Check Against Hospital DB - no need to run step 1
-            // The loop likely needs to be outside of this logic
-            // Each of these steps need to be ran sequentially looping through the EPPIC records one at a time
-            // Checking for Pass or Fail then logging the result to either a list or file so it can be reported on
-            //var processResult = new ProcessResult();
-            //
-
-            //processResult.EppicAddressInHospitalDBResult = new StepResult { StepName = "Step1: Eppic Address Check In Hospitals" };
-            //try  // Step 1 - Check the Address Info of the EPPIC record to see if there is a Match in the Hospital DB  if true then stop the process for this record log the details and move to next step
-            //{
-            //    // Need to call the logic to perform the Eppic Check Against Hospital set the status
-            //    // Since you need to 
-            //    processResult.EppicAddressInHospitalDBResult.StatusCode = "PASS";
-            //    processResult.EppicAddressInHospitalDBResult.Message = "Address Not found in Hospital DB go to Step 2";
-            //    if (processResult.EppicAddressInHospitalDBResult.StatusCode == "FAILED Hospital Check")
-            //    {
-            //        return processResult; // Exit and return the result
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    // If there is an excepton with the API call set StatusCode to FAIL and exit
-            //    processResult.EppicAddressInHospitalDBResult.StatusCode = "FAIL";
-            //    processResult.EppicAddressInHospitalDBResult.Message = ex.Message;
-            //    processResult.MasterStatusCode = "FAIL";
-            //    return processResult;
-            //}
+            StepLogger stepLogger = new StepLogger();
+            if (Globals.inputEppicRecordsInHospitalDB != null && (Globals.inputEppicRecordsInHospitalDB.Count() > 0))
+            {
+                // Let's add the items that have a match in Hospital DB to the Log Collection
+                var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsInHospitalDB.ToList();
+                foreach (var record in eppicRecordsNotInHospitalDB)
+                {
+                    // TBD Needs to be debugged it's printing out like 20 items when there are only 5
+                    stepLogger.AddItem(record, "Step 1 - Eppic Records in Hospital List", "PASS/Stop do not go to next step");
+                }
+            }
+            if (Globals.inputEppicRecordsNotInHospitalDB != null && (Globals.inputEppicRecordsNotInHospitalDB.Count() > 0))
+            {
+                // Let's add the items that do not have match Hospital DB to the Log Collection
+                var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsNotInHospitalDB.ToList();
+                foreach (var record in eppicRecordsNotInHospitalDB)
+                {
+                    // TBD Needs to be debugged it's printing out like 20 items when there are only 5
+                    stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
+                }
+            }
             #endregion
 
             #region Step 2: Check Eppic Address against GIACT only if last step is set to Pass
-            // TBD need to finish this
-            processResult.EppicAddressInGiactResult = new StepResult { StepName = "Step2: Eppic Address Check In GIACT" };
-            processResult.EppicAddressInGiactResult.StatusCode = "PASS";
-            //    processResult.EppicAddressInHospitalDBResult.Message = "Address Not found in Hospital DB go to Step 2";
-            //    if (processResult.EppicAddressInHospitalDBResult.StatusCode == "FAILED Hospital Check")
-            //    {
-            //        return processResult; // Exit and return the result
-            //    }
+            // Now let's process the items from Step 1 that did not have a match in the Hospital DB
+            // Check the Address Information in GIACT 
+            // In the DataHelper.Initilize() when we load the data we build a list of Epic items that have an exact match in Giact and list that does not have a match
+            // Now, all we have to do is log the result to the Log collection!
 
-            if (Globals.giactRecords != null) {
-                var searchresult = giactdataparser.FindGiactByFullAddress(
-                    _eppicrecord?.AddressLine1 ?? string.Empty,
-                    _eppicrecord?.City ?? string.Empty,
-                    _eppicrecord?.State ?? string.Empty,
-                    _eppicrecord?.ZipCode ?? string.Empty,
-                    Globals.giactRecords);
-                if (searchresult != null)
+            if (Globals.inputEppicRecordsInGiactDB != null && (Globals.inputEppicRecordsInGiactDB.Count() > 0))
+            {
+                // Let's add the items that have a match in Hospital DB to the Log Collection
+                var eppicRecordsInGiatDB = Globals.inputEppicRecordsInGiactDB.ToList();
+                foreach (var record in eppicRecordsInGiatDB)
                 {
-                    // Found a match proceed to next step
-                    processResult.EppicAddressInGiactResult.Message = $@"PersonID:{_eppicrecord?.PersonID} Continue to Step 2 Address Found in GIACT.";
-                    processResult.EppicAddressInGiactResult.StatusCode = "PASS";
-                    return processResult;
-                }
-                else
-                {
-                    // If not found per 798 does not match the address exactly, the workflow will end and the request will be denied / marked as fraud.
-                    // Found a match proceed to next step
-                    processResult.EppicAddressInGiactResult.Message = $@"PersonID:{_eppicrecord?.PersonID} Address Not Found in GIACT. Marked as Fraud!";
-                    processResult.EppicAddressInGiactResult.StatusCode = "FAIL";
-                    return processResult;
+                    stepLogger.AddItem(record, "Step 2 - Eppic Records in Giact DB", "Match/Contine to step 3");
                 }
             }
+            if (Globals.inputEppicRecordsNotInGiactDB != null && (Globals.inputEppicRecordsNotInGiactDB.Count() > 0))
+            {
+                // Let's add the items that do not have match Hospital DB to the Log Collection
+                var eppicRecordsNotInGiactDB = Globals.inputEppicRecordsNotInGiactDB.ToList();
+                foreach (var record in eppicRecordsNotInGiactDB)
+                {
+                    stepLogger.AddItem(record, "Step 2 - Eppic Records Not in Giact DB", "Denied, marked as Fraud no need to process");
+                }
+            }
+
             #endregion
 
             #region Step 3: Check Eppic Record Against Seibel CallNotesResult only if last step is set to pass
-            // When Last Step is set to Pass that means the previous step requires moving to the next step
-            // This logic requires the use AI
-            processResult.EppicSeibelCallNotesResult = new StepResult { StepName = "Step 3: Eppic Record Check in GIACT Call Notes" };
-            try
+            // TBD.  Here I would like to add the additional JSON data from the SK logic to the data we are logging to the Collection
+            // Need to look into how to add optional JSON data to the structure
+            // Let's run the step 3 verification
+
+            CallLogChecker callLogChecker = new CallLogChecker();
+
+            // We need to loop through all the items that have a match in Giact DB for step 3 now
+            // This logic could be moved into a function/method to simplify this section of code.
+            if (Globals.inputEppicRecordsInGiactDB != null && (Globals.inputEppicRecordsInGiactDB.Count() > 0))
             {
-                // Stub out Address Check using GIACT
-                // Replace with actual implementation
-                // using the _address details that were passed in execute the logic to verify the Address Check using GIACT lookup
-                // Set the values to determine PASS or FAIL
-                processResult.EppicSeibelCallNotesResult.StatusCode = "PASS";
-                processResult.EppicSeibelCallNotesResult.Message = "Success";
-                if (processResult.EppicSeibelCallNotesResult.StatusCode == "FAIL")
+                // Let's add the items that have a match in Hospital DB to the Log Collection
+                var eppicRecordsInGiatDB = Globals.inputEppicRecordsInGiactDB.ToList();
+                foreach (var record in eppicRecordsInGiatDB)
                 {
-                    processResult.MasterStatusCode = "FAIL";
-                    return processResult; // Exit and return the result
+                    // get a ref to the sibeldataRecords first
+                    var siebeldataRecords = _datahelper.SiebelDataRecords;
+                    var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID(record.PersonID ?? "");
+                    var verificationsCompletedJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+
+                    VerificationCompleted? verificationcompleted = JsonSerializer.Deserialize<VerificationCompleted>(verificationsCompletedJson);
+
+                    if (verificationcompleted?.VerificationsCompleted == "Yes")
+                    {
+                        // No need to move to step 3.a if verification has been completed
+                        // TBD I would like to actually log the JSON of the verificationcompleted to the collection 
+                        stepLogger.AddItem(record, "Step 3 - Eppic Record Passed Verification Check", "PASS Verification Check no need to move to next step!");
+                    }
+                    else  // Verifications have not been completed
+                    {
+                        // Here I would like to take an additional step and call callLogChecker.CheckFraudIntentAsync
+                        // This would allow us to use AI to determine if based on all steps up to this does it look like fraud?
+                        // move to step 3.a if verifications have not been completed
+                        stepLogger.AddItem(record, "Step 3 - Eppic Records Verification Check not passed", "Failed/Contine to step 3a");
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                processResult.EppicSeibelCallNotesResult.StatusCode = "FAIL";
-                processResult.EppicSeibelCallNotesResult.Message = ex.Message;
-                processResult.MasterStatusCode = "FAIL";
-                return processResult;
-            }
+
             #endregion
 
             #region Step 3a: Check Eppic Record Against Seibel CallNotes OTP Check only if last step is set to pass
-            // When Last Step is set to Pass that means the previous step requires moving to the next step
-            // This logic requires the use AI
-            //processResult.EppicSeibelOPTCallNotesResult = new StepResult { StepName = "Step 3a: Eppic OTP Check in GIACT Call Notes" };
-            //try
-            //{
-            //    processResult.EppicSeibelOPTCallNotesResult.StatusCode = "PASS";
-            //    processResult.EppicSeibelOPTCallNotesResult.Message = "Success";
-            //    if (processResult.EppicSeibelOPTCallNotesResult.StatusCode == "FAIL")
-            //    {
-            //        processResult.MasterStatusCode = "FAIL";
-            //        return processResult; // Exit and return the result
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    processResult.EppicSeibelOPTCallNotesResult.StatusCode = "FAIL";
-            //    processResult.EppicSeibelOPTCallNotesResult.Message = ex.Message;
-            //    processResult.MasterStatusCode = "FAIL";
-            //    return processResult;
-            //}
-            //
+            // TBD.  Here I would like to add the additional JSON data from the SK logic to the data we are logging to the Collection
+            // Need to look into how to add optional JSON data to the structure
+            // In this step you can leverage basically that same type of logic that is in Step 3.
+
             #endregion
-            return processResult;
+            return "Steps have ran";
         }
 
         #region Example JSON response

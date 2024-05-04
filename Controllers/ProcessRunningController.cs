@@ -3,6 +3,7 @@ using api_process_runner_api.Models;
 using api_process_runner_api.Helpers;
 using Microsoft.SemanticKernel;
 using api_process_runner_api.Util;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace api_process_runner_api.Controllers
 {
@@ -57,8 +58,11 @@ namespace api_process_runner_api.Controllers
                     }
                     // Comment out if you don't to test data and logic.  Update the RunTestOnData if you want to add additional logic.
                     // Technically, all this should be done from xUnit/Mock but I don't have time for that.
-                    response = await dataHelper.RunTestsOnData(dataHelper);
-                    Console.WriteLine(response); 
+                    //response = await dataHelper.RunTestsOnData(dataHelper);
+                    //Console.WriteLine(response);
+                    ProcessRunnerSteps processRunner = new ProcessRunnerSteps(dataHelper,_kernel);
+                    var processRunnerResults = await processRunner.RunSteps();
+                    response = processRunnerResults;
                     // Comment out the two lines about to not run the tests.
                     // This is where we beed ti cakk ProcessRunnerSteps
                 }

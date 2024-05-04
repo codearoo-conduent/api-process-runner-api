@@ -18,13 +18,14 @@ namespace api_process_runner_api.Helpers
         public static List<GiactRecords>? giactRecords;
         public static IEnumerable<EppicRecords>? inputEppicRecordsInHospitalDB;
         public static IEnumerable<EppicRecords>? inputEppicRecordsNotInHospitalDB;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsInGiactDB;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsNotInGiactDB;
     }
 
     internal class DataHelper
     {
         private BlobHelper _blobHelper;
         private Kernel _kernel;
-        private int _countofRecords = 0;
         private bool _usingLocalFiles;
         private UploadedFilesRequest _uploadedFilesRequest;
         private SiebelDataParser _siebelDataParser;
@@ -119,6 +120,8 @@ namespace api_process_runner_api.Helpers
                     Globals.giactRecords = _giactdataRecords;
                     Step1_BuildEppicListWithMatchesInHospital();
                     Step1_BuildEppicListWithoutInAgainstHospital();
+                    Step2_BuildEppicListWithMatchesInGiact();
+                    Step2_BuildEppicListWithMatchesNotInGiact();
                     result = "Success";
                 }
                 catch (Exception e) 
@@ -201,6 +204,50 @@ namespace api_process_runner_api.Helpers
                         select e);
 
                 Console.WriteLine($"Recs not matching in the address DB: {Globals.inputEppicRecordsNotInHospitalDB.Count()}");
+            }
+            else
+            {
+                // Handle the case when Globals.hospitalRecords is null
+                // For example, log a warning or provide a default value
+            }
+        }
+
+        public void Step2_BuildEppicListWithMatchesInGiact()
+        {
+            // Builds a List of Eppic records that have a match in Hospital DB
+            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
+            if (Globals.giactRecords != null && Globals.eppicRecords != null)
+            {
+                Globals.inputEppicRecordsInGiactDB =
+                    from e in Globals.eppicRecords
+                    join a in Globals.giactRecords
+                        on new { e.AddressLine1, e.City, e.State, e.ZipCode }
+                        equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
+                    select e;
+                Console.WriteLine($"Recs that match in the Giact DB: {Globals.inputEppicRecordsInGiactDB.Count()}");
+            }
+            else
+            {
+                // Handle the case when Globals.hospitalRecords is null
+                // For example, log a warning or provide a default value
+            }
+        }
+
+        public void Step2_BuildEppicListWithMatchesNotInGiact()
+        {
+            // Builds a List of Eppic records that have a match in Hospital DB
+            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
+            if (Globals.giactRecords != null && Globals.eppicRecords != null)
+            {
+                // TBD Needs review as Giact only has AddressLine1 not AddressLine2 which Eppic has.  Also, not sure with the Addressline19 thing comes into play
+                Globals.inputEppicRecordsNotInGiactDB =
+                   Globals.eppicRecords.Except(
+                       from e in Globals.eppicRecords
+                       join a in Globals.giactRecords
+                           on new { e.AddressLine1, e.City, e.State, e.ZipCode }
+                           equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
+                       select e);
+                Console.WriteLine($"Recs that have not match in the Giact DB: {Globals.inputEppicRecordsNotInGiactDB.Count()}");
             }
             else
             {
