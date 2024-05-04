@@ -1,6 +1,10 @@
+using api_process_runner_api.Helpers;
 using api_process_runner_api.Models;
 using Azure.Storage.Blobs;
 using FileHelpers;
+using System.Collections;
+using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
 
 
@@ -51,6 +55,69 @@ public class StepLogger
         {
             string json = JsonSerializer.Serialize(record, options);
             Console.WriteLine(json);
+        }
+    }
+
+    public async Task<string> WriteLogCollectionToDisk(string logfilename, bool usingLocalFiles)
+    {
+        var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
+        BlobHelper blobHelper = new BlobHelper()
+        {
+            ConnectionString = _blobConnection,
+            Container = "Logs"
+        };
+        var result = "";
+        if (usingLocalFiles)
+        {   // If set to use local files this branch will be executed
+            try
+            {
+                // Create JsonSerializerOptions with indented formatting
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+
+                // Write byte array to a local file
+                var filePath = $@"{Constants.LocalFilePath}\Logs\{logfilename}";
+
+                string json = JsonSerializer.Serialize(processSteps, options);
+                byte[] byteArray = Encoding.UTF8.GetBytes(json);
+                File.WriteAllBytes(filePath, byteArray);
+                return result = $@"Wrote the logsteps to: {filePath}";
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return result = $@"Failed to write file to Local filesystem";
+            }
+
+        }
+        else // Using Azure Storage this branch will be executed
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+                string json = JsonSerializer.Serialize(processSteps, options);
+                byte[] byteArray = Encoding.UTF8.GetBytes(json);
+                // Upload Byte array to the blob
+                using (MemoryStream stream = new MemoryStream(byteArray))
+                {
+                    if (blobHelper != null)
+                    {
+                        await blobHelper.WriteToBlobAsync(stream, logfilename);
+                    }
+                }
+                return result = $@"Wrote the logsteps to BlobContiner: {blobHelper?.Container} Blob: {logfilename}";
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return result = $@"Failed to write LogSteps to BlobContainer {blobHelper?.Container}";
+            }
         }
     }
 

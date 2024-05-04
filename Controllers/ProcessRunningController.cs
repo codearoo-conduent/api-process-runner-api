@@ -16,7 +16,7 @@ namespace api_process_runner_api.Controllers
         private readonly Kernel _kernel;
         private readonly JobStatus _jobstatus;
         private readonly UploadedFilesRequest? _filesrequest;
-        private readonly StepsLogFile _logfile;
+        private readonly StepsLogFile _stepslogfile;
 
         private readonly bool _debugging = true;
         public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest, StepsLogFile stepslogfile, JobStatus jobstatus)
@@ -25,7 +25,7 @@ namespace api_process_runner_api.Controllers
             _kernel = kernel;
             _jobstatus = jobstatus;
             _filesrequest = uploadedfilesrequest;
-            _logfile = stepslogfile;
+            _stepslogfile = stepslogfile;
         }
 
 
@@ -44,7 +44,7 @@ namespace api_process_runner_api.Controllers
                 DataHelper dataHelper;
                 
                 if (_filesrequest != null) {
-                    dataHelper = new DataHelper(_filesrequest , _blobConnection, true, _kernel);
+                    dataHelper = new DataHelper(_filesrequest , _blobConnection, Constants.UseLocalFiles, _kernel);  // Change Constants.UseLocalFiles to false to use Azure Blob Storage
                     dataHelper?.ClearCollections(); // Clear All collections just to make sure data does not linger across runs.
                 }
                 else
@@ -62,7 +62,8 @@ namespace api_process_runner_api.Controllers
                     // Technically, all this should be done from xUnit/Mock but I don't have time for that.
                     //response = await dataHelper.RunTestsOnData(dataHelper);
                     //Console.WriteLine(response);
-                    ProcessRunnerSteps processRunner = new ProcessRunnerSteps(dataHelper,_kernel, _jobstatus);
+                    
+                    ProcessRunnerSteps processRunner = new ProcessRunnerSteps(dataHelper, _kernel, _jobstatus, _stepslogfile);
                     _ = processRunner.RunSteps();
 
                     // Comment out the two lines about to not run the tests.
@@ -97,8 +98,8 @@ namespace api_process_runner_api.Controllers
                 {
                     return BadRequest("Please pass a valid FileRequest in the Request Body!");
                 }
-                _logfile.FileName = LogFileGenerator.GenerateLogFileName();  // return generated filename to client.  Shared across async methods
-                return new OkObjectResult(_logfile.FileName);
+                _stepslogfile.FileName = LogFileGenerator.GenerateLogFileName();  // return generated filename to client.  Shared across async methods
+                return new OkObjectResult(_stepslogfile.FileName);
             }
             catch (Exception ex)
             {

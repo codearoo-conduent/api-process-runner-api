@@ -27,11 +27,12 @@ namespace api_process_runner_api.Util
         public string? MasterStatusCode { get; set; }                    // Pass or Fail
     }
     //  public class ProcessRunnerSteps(EppicRecords eppicrecord, SiebelDataParser siebeldataparser, GiactDataParser giactdataparser, EppicDataParser eppicdataparser)
-    internal class ProcessRunnerSteps(DataHelper datahelper, Kernel kernel, JobStatus jobstatus)
+    internal class ProcessRunnerSteps(DataHelper datahelper, Kernel kernel, JobStatus jobstatus, StepsLogFile stepslogfile)
     {
         private DataHelper _datahelper = datahelper;
         private Kernel _kernel = kernel;
         private JobStatus _jobstatus = jobstatus;
+        private StepsLogFile _stepslogfile = stepslogfile;
         //private EppicRecords _eppicrecord = eppicrecord;
         //private SiebelDataParser _siebeldataparser = siebeldataparser;
         //private GiactDataParser _giactdataparser = giactdataparser;
@@ -141,7 +142,8 @@ namespace api_process_runner_api.Util
             _jobstatus.Status = "Processing Completed";
             #endregion
             // return "Steps have ran";
-
+            // write the file to disk
+            await stepLogger.WriteLogCollectionToDisk(_stepslogfile.FileName ?? "", Constants.UseLocalFiles);
         }
 
         #region Example JSON response
