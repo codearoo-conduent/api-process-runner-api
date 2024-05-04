@@ -4,6 +4,7 @@ using api_process_runner_api.Helpers;
 using Microsoft.SemanticKernel;
 using api_process_runner_api.Util;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Azure;
 
 namespace api_process_runner_api.Controllers
 {
@@ -13,14 +14,16 @@ namespace api_process_runner_api.Controllers
     {
         private readonly ILogger<ProcessRunnerController> _logger;
         private readonly Kernel _kernel;
+        private readonly JobStatus _jobstatus;
         private readonly UploadedFilesRequest? _filesrequest;
         private readonly StepsLogFile _logfile;
 
         private readonly bool _debugging = true;
-        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest, StepsLogFile stepslogfile)
+        public ProcessRunnerController(ILogger<ProcessRunnerController> logger, Kernel kernel, UploadedFilesRequest uploadedfilesrequest, StepsLogFile stepslogfile, JobStatus jobstatus)
         {
             _logger = logger;
             _kernel = kernel;
+            _jobstatus = jobstatus;
             _filesrequest = uploadedfilesrequest;
             _logfile = stepslogfile;
         }
@@ -39,7 +42,6 @@ namespace api_process_runner_api.Controllers
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
 
                 DataHelper dataHelper;
-                var response ="Nothing has ran yet!";
                 
                 if (_filesrequest != null) {
                     dataHelper = new DataHelper(_filesrequest , _blobConnection, true, _kernel);
@@ -60,13 +62,14 @@ namespace api_process_runner_api.Controllers
                     // Technically, all this should be done from xUnit/Mock but I don't have time for that.
                     //response = await dataHelper.RunTestsOnData(dataHelper);
                     //Console.WriteLine(response);
-                    ProcessRunnerSteps processRunner = new ProcessRunnerSteps(dataHelper,_kernel);
-                    var processRunnerResults = await processRunner.RunSteps();
-                    response = processRunnerResults;
+                    ProcessRunnerSteps processRunner = new ProcessRunnerSteps(dataHelper,_kernel, _jobstatus);
+                    _ = processRunner.RunSteps();
+
                     // Comment out the two lines about to not run the tests.
                     // This is where we beed ti cakk ProcessRunnerSteps
                 }
-                return new OkObjectResult(response);
+                return Ok("Long-running process started in the background.");
+                // return new OkObjectResult(response);
             }
             catch (Exception ex)
             {
@@ -101,8 +104,14 @@ namespace api_process_runner_api.Controllers
             {
                 return BadRequest($"An error occured: {ex.Message}");
             }
+        }
 
-
+        [HttpGet("CheckJobStatus")] // Pass the 4 Files that were uploaded
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        public ActionResult CheckJobStatus()
+        {
+          return Ok(_jobstatus);
         }
     }
 }

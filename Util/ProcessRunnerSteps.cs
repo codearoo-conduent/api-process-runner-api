@@ -27,19 +27,20 @@ namespace api_process_runner_api.Util
         public string? MasterStatusCode { get; set; }                    // Pass or Fail
     }
     //  public class ProcessRunnerSteps(EppicRecords eppicrecord, SiebelDataParser siebeldataparser, GiactDataParser giactdataparser, EppicDataParser eppicdataparser)
-    internal class ProcessRunnerSteps(DataHelper datahelper, Kernel kernel)
+    internal class ProcessRunnerSteps(DataHelper datahelper, Kernel kernel, JobStatus jobstatus)
     {
         private DataHelper _datahelper = datahelper;
         private Kernel _kernel = kernel;
+        private JobStatus _jobstatus = jobstatus;
         //private EppicRecords _eppicrecord = eppicrecord;
         //private SiebelDataParser _siebeldataparser = siebeldataparser;
         //private GiactDataParser _giactdataparser = giactdataparser;
         //private EppicDataParser _eppicdataparser = eppicdataparser;
 
         //  public ProcessResult RunSteps()
-        public async Task<string> RunSteps()
+        public async Task RunSteps()
         {
-            var processResult = new ProcessResult();
+            // var processResult = new ProcessResult();
             #region Step 1: Eppic Check Against Hospital DB - no need to run step 1
             StepLogger stepLogger = new StepLogger();
             if (Globals.inputEppicRecordsInHospitalDB != null && (Globals.inputEppicRecordsInHospitalDB.Count() > 0))
@@ -62,6 +63,7 @@ namespace api_process_runner_api.Util
                     stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
                 }
             }
+            _jobstatus.Status = "Step 1 completed";
             #endregion
 
             #region Step 2: Check Eppic Address against GIACT only if last step is set to Pass
@@ -88,6 +90,7 @@ namespace api_process_runner_api.Util
                     stepLogger.AddItem(record, "Step 2 - Eppic Records Not in Giact DB", "Denied, marked as Fraud no need to process");
                 }
             }
+            _jobstatus.Status = "Step 2 completed";
 
             #endregion
 
@@ -128,16 +131,17 @@ namespace api_process_runner_api.Util
                     }
                 }
             }
-
+            _jobstatus.Status = "Step 3 completed";
             #endregion
 
             #region Step 3a: Check Eppic Record Against Seibel CallNotes OTP Check only if last step is set to pass
             // TBD.  Here I would like to add the additional JSON data from the SK logic to the data we are logging to the Collection
             // Need to look into how to add optional JSON data to the structure
             // In this step you can leverage basically that same type of logic that is in Step 3.
-
+            _jobstatus.Status = "Processing Completed";
             #endregion
-            return "Steps have ran";
+            // return "Steps have ran";
+
         }
 
         #region Example JSON response

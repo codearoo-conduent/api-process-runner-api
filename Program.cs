@@ -48,6 +48,14 @@ builder.Services.AddSingleton<StepsLogFile>(provider =>
     };
 });
 
+builder.Services.AddSingleton<JobStatus>(provider =>
+{
+    return new JobStatus
+    {
+        Status = "Not Started"
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
