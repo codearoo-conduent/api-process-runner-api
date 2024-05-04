@@ -46,6 +46,11 @@ namespace api_process_runner_api.Helpers
             return giactrecords.FirstOrDefault(record => record.UniqueID == uniqueid);
         }
 
+        public List<GiactRecords>? FindGiactRecordsByUniqueID(string uniqueId)
+        {
+            return giactRecordsList.FindAll(record => record.UniqueID == uniqueId);
+        }
+
         public GiactRecords? FindGiactByAddressLine1(string address, List<GiactRecords> giactrecords)
         {
             return giactrecords.FirstOrDefault(record => record.AddressLine1 == address);
