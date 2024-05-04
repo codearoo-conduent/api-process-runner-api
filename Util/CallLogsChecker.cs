@@ -17,13 +17,14 @@ namespace api_process_runner_api.Util
         private string _promptActivityConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
-         Return the Verificaiton Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication properties. 
-         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verificaiton' before VerficationsCompleted can be set to 'Yes', otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
+         Return the Verification Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication, Phone Number properties. The phone number will contain 10 digits and may or may not have dashes. If there are multiple numbers listed, identify the most recent, updated phone number. If there is no phone number, return 'no phone number'.
+         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verification' or 'One Time Passcode' before VerficationsCompleted can be set to 'Yes', otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
         [JSON]
                {
                   'PersonID': '12345',
                   'ActivityRelatedTo' : '<activity related to>',
                   'FormOfAuthentication' : '<form of authentication>',
+                  'PhoneNumber' : '<phone number>',
                   'VerificationsCompleted' : <verifications completed>
                }
         [JSON END]
@@ -33,6 +34,7 @@ namespace api_process_runner_api.Util
                 'PersonID': '12345',
                 'ActivityRelatedTo' : 'Inbound Call',
                 'FormOfAuthentication' : 'KBA',
+                'PhoneNumber' : '5555555555',
                 'VerificationsCompleted': 'Yes'
              }
 
@@ -40,6 +42,7 @@ namespace api_process_runner_api.Util
                 'PersonID': '12345',
                 'ActivityRelatedto' : 'Inbound Call',
                 'FormOfAuthentication' : 'ID Verfication',
+                'PhoneNumber' : 'no phone number',
                 'VerificationsCompleted': 'Yes'
              }
 
@@ -47,6 +50,7 @@ namespace api_process_runner_api.Util
                 'PersonID': '12345',
                 'ActivityRelatedto' : 'Inbound Call',
                 'FormOfAuthentication' : 'Low Risk',
+                'PhoneNumber' : '5555555555',
                 'VerificationsCompleted': 'No'
              }
  

@@ -111,7 +111,7 @@ namespace api_process_runner_api.Util
                 foreach (var record in eppicRecordsInGiatDB)
                 {
                     // get a ref to the sibeldataRecords first
-                    var siebeldataRecords = _datahelper.SiebelDataRecords;
+                    //var siebeldataRecords = _datahelper.SiebelDataRecords;
                     var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID(record.PersonID ?? "");
                     var verificationsCompletedJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
 
@@ -122,13 +122,26 @@ namespace api_process_runner_api.Util
                         // No need to move to step 3.a if verification has been completed
                         // TBD I would like to actually log the JSON of the verificationcompleted to the collection 
                         stepLogger.AddItem(record, "Step 3 - Eppic Record Passed Verification Check", "PASS Verification Check no need to move to next step!");
+
+                        #region step 3a
+                        // the above needs to include OTP as well; i the SIEBEL call notes list the form of authentication as "One Time Passcode",
+                        // then we need to ensure that hte phone # in the call notes matches the EPICC record phone # OR the phone number in GIACT
+                        if (verificationcompleted?.FormOfAuthentication == "one time passcode")
+                        {
+                            bool step3aPass = false;
+                            step3aPass = _datahelper.Step3a_Check(verificationcompleted.PhoneNumber, record);
+
+                            // if the check doesn't pass, the request is determined to be fraud
+                            if (!step3aPass)
+                            {
+                                stepLogger.AddItem(record, "Step 3a - OTP Pass identified but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
+                            }
+                        }
+                        #endregion
                     }
                     else  // Verifications have not been completed
                     {
-                        // Here I would like to take an additional step and call callLogChecker.CheckFraudIntentAsync
-                        // This would allow us to use AI to determine if based on all steps up to this does it look like fraud?
-                        // move to step 3.a if verifications have not been completed
-                        stepLogger.AddItem(record, "Step 3 - Eppic Records Verification Check not passed", "Failed/Contine to step 3a");
+                        stepLogger.AddItem(record, "Step 3 - Verifications were not complete based on SIEBEL call notes.", "FAIL - fraudelant request");
                     }
                 }
             }
