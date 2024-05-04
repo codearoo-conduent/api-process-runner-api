@@ -27,6 +27,8 @@ namespace api_process_runner_api.Controllers
         [ProducesResponseType(400)]
         public async Task<ActionResult> ProcessRunner()
         {
+            // we need to clear out all the collections after each completion otherwise the collection will get larger as long as the process lives.
+            // TBD
             try
             {
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
@@ -98,9 +100,8 @@ namespace api_process_runner_api.Controllers
         public ActionResult SendFileDetails([FromBody] UploadedFilesRequest filesrequest)
         {
             if (filesrequest != null && _filesrequest != null && filesrequest.SiebelFilename !="string")
-            {
-                // Hard coding these values so I do not have to manually enter them in the Swagger UI
-                // This can be removed later, need this to test the SK stuff.
+            { // This only gets executed if the request body has the file details, otherwise it uses the defaults from the DI in the program.cs
+ 
                 _filesrequest.EppicFilename = filesrequest.EppicFilename;
                 _filesrequest.SiebelFilename = filesrequest.SiebelFilename;
                 _filesrequest.GiactFilename = filesrequest.GiactFilename;
@@ -113,7 +114,7 @@ namespace api_process_runner_api.Controllers
                 {
                     return BadRequest(filesrequest);
                 }
-                LogFileGenerator.GenerateLogFileName();
+                LogFileGenerator.GenerateLogFileName();  // return generated filename to client  TBD add DI for this so it can be shared across async functions and it needs to be cached.
 
                 var response = LogFileGenerator.GenerateLogFileName();
                 return new OkObjectResult(response);
