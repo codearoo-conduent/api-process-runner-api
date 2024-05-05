@@ -84,14 +84,14 @@ namespace api_process_runner_api.Util
         private string _promptActionConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
-        Return the Action Conclusion intent of the query. The Acton Conclusion must be in the format of JSON that consists of PersonID, CallerAuthenticated, FormOfAuthentication, 3rdPartyInvolved, WasCallTransferred, PhoneUpdateFrom, PhoneUpdatedTo, PhoneChanged, AddressChanged, AddressUpdateFrom, AddressUpdateTo properties. The JSON format should be:
+        Return the Action Conclusion intent of the query. The Acton Conclusion must be in the format of JSON that consists of PersonID, CallerAuthenticated, FormOfAuthentication, ThirdPartyInvolved, WasCallTransferred, PhoneUpdateFrom, PhoneUpdatedTo, PhoneChanged, AddressChanged, AddressUpdateFrom, AddressUpdateTo properties. The JSON format should be:
 
         [JSON]
               {
                   'PersonID': '12345',
                   'CallerAuthenticated': '<authenticated>',
                   'FormOfAuthentication' : '<authform>',
-                  '3rdPartyInvolved': <3rdpartyinvolved>',
+                  'ThirdPartyInvolved': <Thirdpartyinvolved>',
                   'WasCallTransferred':<calltransfered>,
                   'PhoneUpdateFrom':<phoneupdatefrom>,
                   'PhoneUpdatedTo':<phoneupdateto>,
@@ -107,7 +107,7 @@ namespace api_process_runner_api.Util
                   'PersonID': '12345',
                   'CallerAuthenticated': 'Yes',
                   'FormOfAuthentication' : 'ID Verification',
-                  '3rdPartyInvolved': 'No',
+                  'ThirdPartyInvolved': 'No',
                   'WasCallTransferred':'No',
                   'PhoneUpdateFrom':'8045055319',
                   'PhoneUpdatedTo':'2512271296',
@@ -169,7 +169,7 @@ namespace api_process_runner_api.Util
             return result ?? "";
         }
 
-        public async Task<string> CheckFraudIntent2Async(Kernel kernel, string personid, string query)
+        public async Task<string> CheckFraudConclusionAsync(Kernel kernel, string personid, string query)
         {
             var fraudConclusionFunction = kernel.CreateFunctionFromPrompt(_promptFraudConclusion, executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 100 });
 

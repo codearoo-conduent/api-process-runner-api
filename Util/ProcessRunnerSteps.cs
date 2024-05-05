@@ -5,6 +5,7 @@ using Microsoft.SemanticKernel;
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Reflection.Emit;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -107,34 +108,81 @@ namespace api_process_runner_api.Util
             if (Globals.inputEppicRecordsInGiactDB != null && (Globals.inputEppicRecordsInGiactDB.Count() > 0))
             {
                 // Let's add the items that have a match in Hospital DB to the Log Collection
-                var eppicRecordsInGiatDB = Globals.inputEppicRecordsInGiactDB.ToList();
-                foreach (var record in eppicRecordsInGiatDB)
+                var eppicRecordsInGiactDB = Globals.inputEppicRecordsInGiactDB.ToList();
+                foreach (var record in eppicRecordsInGiactDB)
                 {
                     // get a ref to the sibeldataRecords first
                     //var siebeldataRecords = _datahelper.SiebelDataRecords;
                     var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID(record.PersonID ?? "");
                     var verificationsCompletedJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
-
                     VerificationCompleted? verificationcompleted = JsonSerializer.Deserialize<VerificationCompleted>(verificationsCompletedJson);
+                    
+                    // Lets get the Fraud Concluson from AI we need to use a special POCO call to collect those details so we can log it to file.
+                    var fraudConclusionJson = await callLogChecker.CheckFraudConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    FraudConclusion? fraudConclusion = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson);
+
+
+                    var verificationConclusionJson = await callLogChecker.CheckActionConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    VerificationConclusion? verificationConclusion = JsonSerializer.Deserialize<VerificationConclusion>(fraudConclusionJson);
 
                     if (verificationcompleted?.VerificationsCompleted == "Yes")
                     {
                         // No need to move to step 3.a if verification has been completed
                         // TBD I would like to actually log the JSON of the verificationcompleted to the collection 
+                        if (record.PersonID == "6488958")
+                        {
+                            Console.WriteLine("This is the record with the OTP in Siebel");
+                        }
+                        // We need to build the special EppicRecord that includes the AI Conclusions which includes the Eppic Record data and also the AI conclusions
+                        // TBD needs to be looked at on Monday
+                        EppicRecordAIConclusion eppicRecordAIConclusion = new EppicRecordAIConclusion
+                        {
+                            PersonID = record.PersonID,
+                            Phone_Number = record.Phone_Number,
+                            AddressLine1 = record.AddressLine1,
+                            AddressLine2 = record.AddressLine2,
+                            City = record.City,
+                            State = record.State,
+                            ZipCode = record.ZipCode,
+                            FraudConclusion = new FraudConclusion
+                            {
+                                PersonID = record.PersonID,
+                                FraudConclusionNote = fraudConclusion?.FraudConclusionNote,
+                                FraudConclusionType = fraudConclusion?.FraudConclusionType
+                            },
+                            VerificationConclusion = new VerificationConclusion
+                            {
+                                PersonID = record.PersonID,
+                                CallerAuthenticated = verificationConclusion?.CallerAuthenticated,
+                                FormOfAuthentication = verificationConclusion?.FormOfAuthentication,
+                                ThirdPartyInvolved = verificationConclusion?.ThirdPartyInvolved,
+                                WasCallTransferred = verificationConclusion?.WasCallTransferred,
+                                PhoneUpdateFrom = verificationConclusion?.PhoneUpdateFrom,
+                                PhoneChanged = verificationConclusion?.PhoneChanged,
+                                AddressChanged = verificationConclusion?.AddressChanged,
+                                AddressUpdateFrom = verificationConclusion?.AddressUpdateFrom,
+                                AddressUpdateTo = verificationConclusion?.AddressUpdateTo
+                            }
+                        };
+                        
                         stepLogger.AddItem(record, "Step 3 - Eppic Record Passed Verification Check", "PASS Verification Check no need to move to next step!");
 
-                        #region step 3a
-                        // the above needs to include OTP as well; i the SIEBEL call notes list the form of authentication as "One Time Passcode",
-                        // then we need to ensure that hte phone # in the call notes matches the EPICC record phone # OR the phone number in GIACT
-                        if (verificationcompleted?.FormOfAuthentication == "one time passcode")
+                        #region step 3a  we need to look closely at this 
+                        // the above needs to include OTP as well; in the SIEBEL call notes list the form of authentication as "One Time Passcode",
+                        // then we need to ensure that the phone # in the call notes matches the EPICC record phone # OR the phone number in GIACT
+                        if (verificationcompleted?.FormOfAuthentication == "One Time Passcode")
                         {
                             bool step3aPass = false;
-                            step3aPass = _datahelper.Step3a_Check(verificationcompleted.PhoneNumber, record);
+                            step3aPass = _datahelper.Step3a_Check(verificationcompleted.PhoneNumber ?? "", record);
 
                             // if the check doesn't pass, the request is determined to be fraud
                             if (!step3aPass)
                             {
-                                stepLogger.AddItem(record, "Step 3a - OTP Pass identified but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
+                                stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
+                            }
+                            else
+                            {
+                                stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification, phone number matches the phone number in EPPIC or GIACT", "PASS");
                             }
                         }
                         #endregion

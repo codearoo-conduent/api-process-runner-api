@@ -219,15 +219,24 @@ namespace api_process_runner_api.Helpers
             Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
             if (Globals.giactRecords != null && Globals.eppicRecords != null)
             {
+                //Globals.inputEppicRecordsInGiactDB =
+                //    (from e in Globals.eppicRecords
+                //     join a in Globals.giactRecords
+                //        on new { e?.AddressLine1, e?.City, e?.State, e?.ZipCode }
+                //        //equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
+                //        // The line below fails on the join for some reason
+                //        equals new { a?.AddressCurrentPast, a?.CityCurrentPast, a?.StateCurrentPast, a?.ZipCodeCurrentPast }
+                //    select e).Distinct();
+                //Console.WriteLine($"Recs that match in the Giact DB: {Globals.inputEppicRecordsInGiactDB.Count()}");
+
                 Globals.inputEppicRecordsInGiactDB =
                     (from e in Globals.eppicRecords
-                     join a in Globals.giactRecords
-                        on new { e?.AddressLine1, e?.City, e?.State, e?.ZipCode }
-                        equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
-                        // The line below fails on the join for some reason
-                        //equals new { a?.AddressCurrentPast, a?.CityCurrentPast, a?.StateCurrentPast, a?.ZipCodeCurrentPast }
-                    select e).Distinct();
-                Console.WriteLine($"Recs that match in the Giact DB: {Globals.inputEppicRecordsInGiactDB.Count()}");
+                        from a in Globals.giactRecords
+                        where e.AddressLine1 == a.AddressCurrentPast &&
+                         e.City == a.CityCurrentPast &&
+                         e.State == a.StateCurrentPast &&
+                         e.ZipCode == a.ZipCodeCurrentPast
+                         select e).Distinct();
             }
             else
             {
@@ -282,14 +291,17 @@ namespace api_process_runner_api.Helpers
             // pull all GIACT records for this person to check if the phone number matches any of the phone numbers in the GIACT records matches
             else
             {
-                List<GiactRecords> giactRecordsForId = _giactDataParser.FindGiactRecordsByUniqueID(eppicRecord.PersonID);
-
-                GiactRecords matchingGiactRecord = giactRecordsForId.FirstOrDefault(record => record.PhoneNumber == callNotesPhoneNumber.ToString());
-
-                if (matchingGiactRecord != null)
+                
+                List<GiactRecords>? giactRecordsForId = _giactDataParser.FindGiactRecordsByUniqueID(eppicRecord.PersonID ?? "");
+                if (giactRecordsForId != null)
                 {
-                    Console.WriteLine("Phone number in call notes matches phone number in GIACT! Check passed");
-                    pass = true;
+                    GiactRecords matchingGiactRecord = giactRecordsForId.FirstOrDefault(record => record.PhoneNumber == callNotesPhoneNumber.ToString()) ?? new GiactRecords();
+
+                    if (matchingGiactRecord != null)
+                    {
+                        Console.WriteLine("Phone number in call notes matches phone number in GIACT! Check passed");
+                        pass = true;
+                    }
                 }
             }
 
@@ -315,7 +327,7 @@ namespace api_process_runner_api.Helpers
             GiactDataRecords?.Clear();
         }
 
-        public async Task<string> RunTestsOnData(DataHelper dataHelper)
+        public async Task<string> RunTestsOnData(DataHelper dataHelper, bool v)
         {
             try
             {
@@ -356,18 +368,20 @@ namespace api_process_runner_api.Helpers
                 bool step3aPass = false;
                 // if we have a one time passcode, we then need to verify that the phone number matches the EPICC record or GIACT record phone number
                 // otherwise, we skip step 3
-                if (verificationcompleted.FormOfAuthentication.Equals("one time passcode"))
+                if (verificationcompleted?.FormOfAuthentication != null)
                 {
-                    step3aPass = Step3a_Check(verificationcompleted.PhoneNumber, recordMatchedPersonID);
-
-                    // if the check doesn't pass, the request is determeind to be fraud. We can extrapolate this checkPassed
-                    // and add it to the steplogger below
-                    if (!step3aPass)
+                    if (verificationcompleted.FormOfAuthentication.Equals("one time passcode"))
                     {
-                        Console.WriteLine("Fraud detected!");
+                        step3aPass = Step3a_Check(verificationcompleted.PhoneNumber ?? "", recordMatchedPersonID ?? new EppicRecords());
+
+                        // if the check doesn't pass, the request is determeind to be fraud. We can extrapolate this checkPassed
+                        // and add it to the steplogger below
+                        if (!step3aPass)
+                        {
+                            Console.WriteLine("Fraud detected!");
+                        }
                     }
                 }
-
                 // Test the Step Logger  Let's Add the Eppic Items that Failed Step 1
                 // There are not Eppic Items that have a Match in Hospital DB so no need to test
                 // So there are no records that match Hospital Address so nothing will be added!
@@ -375,16 +389,18 @@ namespace api_process_runner_api.Helpers
                 if (Globals.inputEppicRecordsNotInHospitalDB != null)
                 {
                     var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsNotInHospitalDB.ToList();
+                    
                     foreach (var record in eppicRecordsNotInHospitalDB)
                     {
                         // TBD Needs to be debugged it's printing out like 20 items when there are only 5
-                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
+
+                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step",false);
                     }
                 }
                 // if step3a failed, we can log the issue here
                 if (!step3aPass)
                 {
-                    stepLogger.AddItem(recordMatchedPersonID, "Step 3a - OTP Pass identified but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
+                    stepLogger.AddItem(recordMatchedPersonID ?? new EppicRecords(), "Step 3a - OTP Pass identified but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
                 }
 
                 // stepLogger.TestAddItems();  // This will add 10 test items to the Logger Collection
