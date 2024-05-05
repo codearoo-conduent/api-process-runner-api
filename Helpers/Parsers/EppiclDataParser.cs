@@ -6,7 +6,7 @@ using api_process_runner_api.Models;
 using FileHelpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace api_process_runner_api.Helpers
+namespace api_process_runner_api.Helpers.Parsers
 {
     public class EppicDataParser
     {
@@ -17,7 +17,7 @@ namespace api_process_runner_api.Helpers
         {
             var engineEppic = new FileHelperEngine<EppicRecords>();
             var recordsEppic = engineEppic.ReadStream(reader);
-            this.eppicRecordsList = recordsEppic.ToList();
+            eppicRecordsList = recordsEppic.ToList();
         }
 
         public int CountOfRecords
@@ -43,7 +43,7 @@ namespace api_process_runner_api.Helpers
             }
         }
 
-        public EppicRecords? FindEppicPersonID(string personID, List<EppicRecords> eppicrecords)  
+        public EppicRecords? FindEppicPersonID(string personID, List<EppicRecords> eppicrecords)
         {
             return eppicrecords.FirstOrDefault(record => record.PersonID == personID);
         }
