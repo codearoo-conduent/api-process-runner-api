@@ -1,5 +1,7 @@
 ﻿using api_process_runner_api.Helpers;
+using api_process_runner_api.Helpers.Reporting;
 using api_process_runner_api.Models;
+using api_process_runner_api.Models.Reporting;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.SemanticKernel;
 using System;
@@ -34,10 +36,11 @@ namespace api_process_runner_api.Util
         private Kernel _kernel = kernel;
         private JobStatus _jobstatus = jobstatus;
         private StepsLogFile _stepslogfile = stepslogfile;
-        //private EppicRecords _eppicrecord = eppicrecord;
-        //private SiebelDataParser _siebeldataparser = siebeldataparser;
-        //private GiactDataParser _giactdataparser = giactdataparser;
-        //private EppicDataParser _eppicdataparser = eppicdataparser;
+        // Adding Managers for CSV reporting
+        private EppicStepResultsManager _eppicstepresultsmanager = new EppicStepResultsManager();
+        private ActionConclusionManager _actionconclusionmanager = new ActionConclusionManager();
+        private FraudConclusionManager _fraudconclusionmanager = new FraudConclusionManager();
+        private VerificationConclusionManager _verificationconclusionmanager = new VerificationConclusionManager();
 
         //  public ProcessResult RunSteps()
         public async Task RunSteps()
@@ -45,14 +48,34 @@ namespace api_process_runner_api.Util
             // var processResult = new ProcessResult();
             #region Step 1: Eppic Check Against Hospital DB - no need to run step 1
             StepLogger stepLogger = new StepLogger();
+            // var eppicStepResultsRecord = new EppicStepResults();
+            var eppicStepResultRecord = new EppicStepResults
+            {
+                LogID = _stepslogfile.FileName,
+                LogDate = DateTime.Today.ToString("yyyy-MM-dd"),
+            };
             if (Globals.inputEppicRecordsInHospitalDB != null && (Globals.inputEppicRecordsInHospitalDB.Count() > 0))
             {
                 // Let's add the items that have a match in Hospital DB to the Log Collection
-                var eppicRecordsNotInHospitalDB = Globals.inputEppicRecordsInHospitalDB.ToList();
-                foreach (var record in eppicRecordsNotInHospitalDB)
+                var eppicRecordsInHospitalDB = Globals.inputEppicRecordsInHospitalDB.ToList() ;
+                foreach (var record in eppicRecordsInHospitalDB)
                 {
                     // TBD Needs to be debugged it's printing out like 20 items when there are only 5
                     stepLogger.AddItem(record, "Step 1 - Eppic Records in Hospital List", "PASS/Stop do not go to next step");
+                    eppicStepResultRecord.PersonID = record.PersonID;
+                    eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                    eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                    eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                    eppicStepResultRecord.City = record.City;
+                    eppicStepResultRecord.State = record.State;
+                    eppicStepResultRecord.Zip = record.ZipCode;
+                    eppicStepResultRecord.Step1HospitalMatch = true;
+                    eppicStepResultRecord.Step2GiactMatch = false;
+                    eppicStepResultRecord.Step3PassedVerificationCheck = false;
+                    eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                    eppicStepResultRecord.LastStepCompleted = "Step1";
+                    eppicStepResultRecord.Status = "Eppic Record found in Hospital List - Pass/Stop no need to go to Step 2";
+                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
                 }
             }
             if (Globals.inputEppicRecordsNotInHospitalDB != null && (Globals.inputEppicRecordsNotInHospitalDB.Count() > 0))
@@ -63,6 +86,20 @@ namespace api_process_runner_api.Util
                 {
                     // TBD Needs to be debugged it's printing out like 20 items when there are only 5
                     stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
+                    eppicStepResultRecord.PersonID = record.PersonID;
+                    eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                    eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                    eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                    eppicStepResultRecord.City = record.City;
+                    eppicStepResultRecord.State = record.State;
+                    eppicStepResultRecord.Zip = record.ZipCode;
+                    eppicStepResultRecord.Step1HospitalMatch = false;
+                    eppicStepResultRecord.Step2GiactMatch = false;
+                    eppicStepResultRecord.Step3PassedVerificationCheck = false;
+                    eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                    eppicStepResultRecord.LastStepCompleted = "Step1";
+                    eppicStepResultRecord.Status = "Eppic Record not found in Hospital List - Fail go to Step 2";
+                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
                 }
             }
             _jobstatus.Status = "Step 1 completed";
@@ -81,6 +118,21 @@ namespace api_process_runner_api.Util
                 foreach (var record in eppicRecordsInGiatDB)
                 {
                     stepLogger.AddItem(record, "Step 2 - Eppic Records in Giact DB", "Match/Contine to step 3");
+                    eppicStepResultRecord.PersonID = record.PersonID;
+                    eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                    eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                    eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                    eppicStepResultRecord.City = record.City;
+                    eppicStepResultRecord.State = record.State;
+                    eppicStepResultRecord.Zip = record.ZipCode;
+                    eppicStepResultRecord.Step1HospitalMatch = false;
+                    eppicStepResultRecord.Step2GiactMatch = true;
+                    eppicStepResultRecord.Step3PassedVerificationCheck = false;
+                    eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                    eppicStepResultRecord.LastStepCompleted = "Step2";
+                    eppicStepResultRecord.Status = "Eppic Record found match in Giact - Continue to Step 3";
+                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+
                 }
             }
             if (Globals.inputEppicRecordsNotInGiactDB != null && (Globals.inputEppicRecordsNotInGiactDB.Count() > 0))
@@ -90,6 +142,20 @@ namespace api_process_runner_api.Util
                 foreach (var record in eppicRecordsNotInGiactDB)
                 {
                     stepLogger.AddItem(record, "Step 2 - Eppic Records Not in Giact DB", "Denied, marked as Fraud no need to process");
+                    eppicStepResultRecord.PersonID = record.PersonID;
+                    eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                    eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                    eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                    eppicStepResultRecord.City = record.City;
+                    eppicStepResultRecord.State = record.State;
+                    eppicStepResultRecord.Zip = record.ZipCode;
+                    eppicStepResultRecord.Step1HospitalMatch = false;
+                    eppicStepResultRecord.Step2GiactMatch = false;
+                    eppicStepResultRecord.Step3PassedVerificationCheck = false;
+                    eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                    eppicStepResultRecord.LastStepCompleted = "Step2";
+                    eppicStepResultRecord.Status = "Eppic Record no match in Giact - Denied - Marked as Fraud no need to proceed";
+                    _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
                 }
             }
             _jobstatus.Status = "Step 2 completed";
@@ -102,6 +168,9 @@ namespace api_process_runner_api.Util
             // Let's run the step 3 verification
 
             CallLogChecker callLogChecker = new CallLogChecker();
+            var fraudConclusionResultRecord = new FraudConclusion();
+            var actionConclusionResultRecord = new ActionConclusion();
+            var verificationConclusionResultRecord = new VerificationConclusion(); 
 
             // We need to loop through all the items that have a match in Giact DB for step 3 now
             // This logic could be moved into a function/method to simplify this section of code.
@@ -122,50 +191,65 @@ namespace api_process_runner_api.Util
                     FraudConclusion? fraudConclusion = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson);
 
 
-                    var verificationConclusionJson = await callLogChecker.CheckActionConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    var verificationConclusionJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
                     VerificationConclusion? verificationConclusion = JsonSerializer.Deserialize<VerificationConclusion>(fraudConclusionJson);
+
+                    var actionConclusionJson = await callLogChecker.CheckActionConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    ActionConclusion? actionConclusion = JsonSerializer.Deserialize<ActionConclusion>(actionConclusionJson);
 
                     if (verificationcompleted?.VerificationsCompleted == "Yes")
                     {
                         // No need to move to step 3.a if verification has been completed
                         // TBD I would like to actually log the JSON of the verificationcompleted to the collection 
-                        if (record.PersonID == "6488958")
-                        {
-                            Console.WriteLine("This is the record with the OTP in Siebel");
-                        }
-                        // We need to build the special EppicRecord that includes the AI Conclusions which includes the Eppic Record data and also the AI conclusions
+                        //if (record.PersonID == "6488958")
+                        //{
+                        //    Console.WriteLine("This is the record with the OTP in Siebel");
+                        //}
                         // TBD needs to be looked at on Monday
-                        EppicRecordAIConclusion eppicRecordAIConclusion = new EppicRecordAIConclusion
-                        {
-                            PersonID = record.PersonID,
-                            Phone_Number = record.Phone_Number,
-                            AddressLine1 = record.AddressLine1,
-                            AddressLine2 = record.AddressLine2,
-                            City = record.City,
-                            State = record.State,
-                            ZipCode = record.ZipCode,
-                            FraudConclusion = new FraudConclusion
-                            {
-                                PersonID = record.PersonID,
-                                FraudConclusionNote = fraudConclusion?.FraudConclusionNote,
-                                FraudConclusionType = fraudConclusion?.FraudConclusionType
-                            },
-                            VerificationConclusion = new VerificationConclusion
-                            {
-                                PersonID = record.PersonID,
-                                CallerAuthenticated = verificationConclusion?.CallerAuthenticated,
-                                FormOfAuthentication = verificationConclusion?.FormOfAuthentication,
-                                ThirdPartyInvolved = verificationConclusion?.ThirdPartyInvolved,
-                                WasCallTransferred = verificationConclusion?.WasCallTransferred,
-                                PhoneUpdateFrom = verificationConclusion?.PhoneUpdateFrom,
-                                PhoneChanged = verificationConclusion?.PhoneChanged,
-                                AddressChanged = verificationConclusion?.AddressChanged,
-                                AddressUpdateFrom = verificationConclusion?.AddressUpdateFrom,
-                                AddressUpdateTo = verificationConclusion?.AddressUpdateTo
-                            }
-                        };
-                        
-                        stepLogger.AddItem(record, "Step 3 - Eppic Record Passed Verification Check", "PASS Verification Check no need to move to next step!");
+                              
+                        stepLogger.AddItem(record, "Step 3 - Eppic Record Passed Verification Check", "PASS Verification");
+                        eppicStepResultRecord.PersonID = record.PersonID;
+                        eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                        eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                        eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                        eppicStepResultRecord.City = record.City;
+                        eppicStepResultRecord.State = record.State;
+                        eppicStepResultRecord.Zip = record.ZipCode;
+                        eppicStepResultRecord.Step1HospitalMatch = false;
+                        eppicStepResultRecord.Step2GiactMatch = true;
+                        eppicStepResultRecord.Step3PassedVerificationCheck = true;
+                        eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                        eppicStepResultRecord.LastStepCompleted = "Step3";
+                        eppicStepResultRecord.Status = "Eppic Record Passed Verification Check ";
+
+                        // Call to CSV Manager to log the data to the collection
+                        fraudConclusionResultRecord.PersonID = record.PersonID;
+                        fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
+                        fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
+                        fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
+                        _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                        verificationConclusionResultRecord.PersonID = record?.PersonID;
+                        verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
+                        verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
+                        verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
+                        verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
+
+                        actionConclusionResultRecord.PersonID = record?.PersonID;
+                        actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
+                        actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
+                        actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
+                        actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred; 
+                        actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
+                        actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
+                        actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
+                        actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
+                        actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
+                        actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
+                        // Add record to the collections
+                        _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                        _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                        _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
+                        _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
 
                         #region step 3a  we need to look closely at this 
                         // the above needs to include OTP as well; in the SIEBEL call notes list the form of authentication as "One Time Passcode",
@@ -179,10 +263,93 @@ namespace api_process_runner_api.Util
                             if (!step3aPass)
                             {
                                 stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
+                                eppicStepResultRecord.PersonID = record.PersonID;
+                                eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                                eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                                eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                                eppicStepResultRecord.City = record.City;
+                                eppicStepResultRecord.State = record.State;
+                                eppicStepResultRecord.Zip = record.ZipCode;
+                                eppicStepResultRecord.Step1HospitalMatch = false;
+                                eppicStepResultRecord.Step2GiactMatch = true;
+                                eppicStepResultRecord.Step3PassedVerificationCheck = true;
+                                eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                                eppicStepResultRecord.LastStepCompleted = "Step3a";
+                                eppicStepResultRecord.Status = "Eppic Record Auth=OTP Check phone number for match in EPPIC or GIACT not found - Fail - Fraduelant Request ";
+                               
+                                fraudConclusionResultRecord.PersonID = record.PersonID;
+                                fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
+                                fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
+                                fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
+                              
+                                verificationConclusionResultRecord.PersonID = record?.PersonID;
+                                verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
+                                verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
+                                verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
+                                verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
+
+                                actionConclusionResultRecord.PersonID = record?.PersonID;
+                                actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
+                                actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
+                                actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
+                                actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
+                                actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
+                                actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
+                                actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
+                                actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
+                                actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
+                                actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
+                                // Add record to the collections
+                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                                _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
+                                _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
                             }
                             else
                             {
                                 stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification, phone number matches the phone number in EPPIC or GIACT", "PASS");
+                                // Call to CSV Manager to log the data to the collection
+                                eppicStepResultRecord.PersonID = record.PersonID;
+                                eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                                eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                                eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                                eppicStepResultRecord.City = record.City;
+                                eppicStepResultRecord.State = record.State;
+                                eppicStepResultRecord.Zip = record.ZipCode;
+                                eppicStepResultRecord.Step1HospitalMatch = false;
+                                eppicStepResultRecord.Step2GiactMatch = true;
+                                eppicStepResultRecord.Step3PassedVerificationCheck = true;
+                                eppicStepResultRecord.Step3aPassedOTPPhoneGiact = true;
+                                eppicStepResultRecord.LastStepCompleted = "Step3a";
+                                eppicStepResultRecord.Status = "Eppic Record Auth=OTP Check found phone number match in EPPIC or GIACT - PASS ";
+
+                                fraudConclusionResultRecord.PersonID = record.PersonID;
+                                fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
+                                fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
+                                fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
+
+                                verificationConclusionResultRecord.PersonID = record?.PersonID;
+                                verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
+                                verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
+                                verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
+                                verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
+
+                                actionConclusionResultRecord.PersonID = record?.PersonID;
+                                actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
+                                actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
+                                actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
+                                actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
+                                actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
+                                actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
+                                actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
+                                actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
+                                actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
+                                actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
+                                // Add record to the collections
+                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                                _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
+                                _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
                             }
                         }
                         #endregion
@@ -190,10 +357,52 @@ namespace api_process_runner_api.Util
                     else  // Verifications have not been completed
                     {
                         stepLogger.AddItem(record, "Step 3 - Verifications were not complete based on SIEBEL call notes.", "FAIL - fraudelant request");
+                        // Call to CSV Manager to log the data to the collection
+                        eppicStepResultRecord.PersonID = record.PersonID;
+                        eppicStepResultRecord.PhoneNumber = record.Phone_Number;
+                        eppicStepResultRecord.AddressLine1 = record.AddressLine1;
+                        eppicStepResultRecord.AddressLine2 = record.AddressLine2;
+                        eppicStepResultRecord.City = record.City;
+                        eppicStepResultRecord.State = record.State;
+                        eppicStepResultRecord.Zip = record.ZipCode;
+                        eppicStepResultRecord.Step1HospitalMatch = false;
+                        eppicStepResultRecord.Step2GiactMatch = true;
+                        eppicStepResultRecord.Step3PassedVerificationCheck = false;
+                        eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
+                        eppicStepResultRecord.LastStepCompleted = "Step3";
+                        eppicStepResultRecord.Status = "Eppic Record Verifications were not complete based on SIEBEL call notes. FAIL - fraudelant request";
+
+                        fraudConclusionResultRecord.PersonID = record.PersonID;
+                        fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
+                        fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
+                        fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
+
+                        verificationConclusionResultRecord.PersonID = record?.PersonID;
+                        verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
+                        verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
+                        verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
+                        verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
+
+                        actionConclusionResultRecord.PersonID = record?.PersonID;
+                        actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
+                        actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
+                        actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
+                        actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
+                        actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
+                        actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
+                        actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
+                        actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
+                        actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
+                        actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
+                        // Add record to the collections
+                        _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                        _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                        _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
+                        _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
                     }
                 }
             }
-            _jobstatus.Status = "Step 3 completed";
+            _jobstatus.Status = "Step 3 - 3.a completed";
             #endregion
 
             #region Step 3a: Check Eppic Record Against Seibel CallNotes OTP Check only if last step is set to pass
@@ -205,31 +414,14 @@ namespace api_process_runner_api.Util
             // return "Steps have ran";
             // write the file to disk
             await stepLogger.WriteLogCollectionToDisk(_stepslogfile.FileName ?? "", Constants.UseLocalFiles);
+            // Let's create the CSV files.
+            _eppicstepresultsmanager.WriteToCsv(Constants.UseLocalFiles);
+            _fraudconclusionmanager.WriteToCsv(Constants.UseLocalFiles);
+            _verificationconclusionmanager.WriteToCsv(Constants.UseLocalFiles);
+            _actionconclusionmanager.WriteToCsv(Constants.UseLocalFiles);
         }
 
-        #region Example JSON response
-        /*
-            {
-                "SiebelLookupResult": {
-                    "StepName": "Siebel Lookup",
-                    "StatusCode": "PASS",
-                    "Message": "Success"
-                },
-                "AddressCheckResult": {
-                    "StepName": "Address Check",
-                    "StatusCode": "PASS",
-                    "Message": "Success"
-                },
-                "GoogleSearchResult": {
-                    "StepName": "Google Search",
-                    "StatusCode": "PASS",
-                    "Message": "Success"
-                },
-                "MasterStatusCode":"PASS"
-            }
-
-        */
-        #endregion
+       
 
         #region GoogleSearch Not bing used
         //private bool PerformGoogleSearch(string address)
