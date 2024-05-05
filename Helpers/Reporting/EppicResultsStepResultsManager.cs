@@ -15,7 +15,8 @@ namespace api_process_runner_api.Helpers.Reporting
 
         // Method to add a new item
         public void AddOrUpdateEppicStepResult(EppicStepResults newItem)
-        {                 
+        {           
+            // So for EPPIC Records there is only one record so when we make updates we need to check for the item and update it
             var existingItem = _eppicStepsResults.FirstOrDefault(item => item.LogID == newItem.LogID);
 
             if (existingItem == null)
