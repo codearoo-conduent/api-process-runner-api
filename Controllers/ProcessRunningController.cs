@@ -5,6 +5,7 @@ using Microsoft.SemanticKernel;
 using api_process_runner_api.Util;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Azure;
+using api_process_runner_api.Tests;
 
 namespace api_process_runner_api.Controllers
 {
@@ -40,8 +41,10 @@ namespace api_process_runner_api.Controllers
             try
             {
                 var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
+                // Writing to CSV Tested 5/5 RDC
+                // Tester.TestCSVManagers(_stepslogfile.FileName ?? "");
 
-                DataHelper dataHelper;
+                DataHelper dataHelper;  // TBD I think there is an issue with Step2 building of the IEnumerable it's not finished Step 3
                 
                 if (_filesrequest != null) {
                     dataHelper = new DataHelper(_filesrequest , _blobConnection, Constants.UseLocalFiles, _kernel);  // Change Constants.UseLocalFiles to false to use Azure Blob Storage

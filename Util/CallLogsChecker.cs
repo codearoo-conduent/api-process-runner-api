@@ -14,7 +14,7 @@ namespace api_process_runner_api.Util
         // Phone # updated from 8045055319 to 2512271296
         // Address updated from 6608 zW 124TH ST  OKLAHOMA CITY OK 73142 to 205 qfGzfLlf fVE  EVERGREEN AL 36401
 
-        private string _promptActivityConclusion = @"PersonID: {{$personid}}
+        private string _promptVerificationConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
          Return the Verification Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication, Phone Number properties. The phone number will contain 10 digits and may or may not have dashes. If there are multiple numbers listed, identify the most recent, updated phone number. If there is no phone number, return 'no phone number'.
@@ -135,7 +135,7 @@ namespace api_process_runner_api.Util
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
-                var response = await kernel.InvokePromptAsync(_promptActivityConclusion, arguments2);
+                var response = await kernel.InvokePromptAsync(_promptVerificationConclusion, arguments2);
                 result = response.GetValue<string>() ?? "";
             }
             catch (Exception ex)
@@ -167,15 +167,6 @@ namespace api_process_runner_api.Util
                 Console.WriteLine(ex);
             }
             return result ?? "";
-        }
-
-        public async Task<string> CheckFraudConclusionAsync(Kernel kernel, string personid, string query)
-        {
-            var fraudConclusionFunction = kernel.CreateFunctionFromPrompt(_promptFraudConclusion, executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 100 });
-
-            var response = await kernel.InvokeAsync(fraudConclusionFunction, new() { ["personid"] = personid, ["query"] = query, });
-
-            return response.GetValue<string>() ?? "";
         }
 
         public async Task<string> CheckActionConclusionAsync(Kernel kernel, string personid, string query)

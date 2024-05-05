@@ -6,7 +6,7 @@ using api_process_runner_api.Models;
 using FileHelpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace api_process_runner_api.Helpers
+namespace api_process_runner_api.Helpers.Parsers
 {
     internal class HospitalShelterDataParser
     {
@@ -17,7 +17,7 @@ namespace api_process_runner_api.Helpers
         {
             var engineHospitals = new FileHelperEngine<HospitalShelterRecords>();
             var recordsSiebel = engineHospitals.ReadStream(reader);
-            this.hospitalRecordsList = recordsSiebel.ToList();
+            hospitalRecordsList = recordsSiebel.ToList();
         }
 
         public int CountOfRecords
@@ -42,7 +42,7 @@ namespace api_process_runner_api.Helpers
             }
         }
 
-        public HospitalShelterRecords? FindHospitalByAddress1(string address1, List<HospitalShelterRecords> hospitalrecords)  
+        public HospitalShelterRecords? FindHospitalByAddress1(string address1, List<HospitalShelterRecords> hospitalrecords)
         {
             return hospitalrecords.FirstOrDefault(record => record.AddressLine1 == address1);
         }
