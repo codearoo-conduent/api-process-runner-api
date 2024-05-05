@@ -169,15 +169,6 @@ namespace api_process_runner_api.Util
             return result ?? "";
         }
 
-        public async Task<string> CheckFraudConclusionAsync(Kernel kernel, string personid, string query)
-        {
-            var fraudConclusionFunction = kernel.CreateFunctionFromPrompt(_promptFraudConclusion, executionSettings: new OpenAIPromptExecutionSettings { MaxTokens = 100 });
-
-            var response = await kernel.InvokeAsync(fraudConclusionFunction, new() { ["personid"] = personid, ["query"] = query, });
-
-            return response.GetValue<string>() ?? "";
-        }
-
         public async Task<string> CheckActionConclusionAsync(Kernel kernel, string personid, string query)
         {
 #pragma warning disable SKEXP0010

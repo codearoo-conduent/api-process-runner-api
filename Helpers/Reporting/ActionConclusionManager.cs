@@ -9,6 +9,7 @@ namespace api_process_runner_api.Helpers.Reporting
         private List<ActionConclusion> _actionConclusionResults = new List<ActionConclusion>();
 
         public List<ActionConclusion> ActionConclusionResults { get { return _actionConclusionResults; } }
+        private bool _headercreated=false;
 
         // Method to add or update an item
         public void AddOrUpdateActionConclusion(ActionConclusion newItem)
@@ -50,10 +51,15 @@ namespace api_process_runner_api.Helpers.Reporting
 
         private void WriteToLocalCsv()
         {
-            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\ActionConclusionResults.csv";
+            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\ActionConclusionResults_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid().ToString().Substring(0, 8)}.csv";
 
             using (StreamWriter writer = new StreamWriter(csvFilePath))
             {
+                if (!_headercreated)
+                {
+                    writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
+                    _headercreated = true;
+                }
                 foreach (var item in _actionConclusionResults)
                 {
                     writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");
@@ -85,6 +91,11 @@ namespace api_process_runner_api.Helpers.Reporting
             {
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
+                    if (!_headercreated)
+                    {
+                        writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
+                        _headercreated = true;
+                    }
                     foreach (var item in _actionConclusionResults)
                     {
                         writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");

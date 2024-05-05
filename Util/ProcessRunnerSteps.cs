@@ -75,7 +75,7 @@ namespace api_process_runner_api.Util
                     eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
                     eppicStepResultRecord.LastStepCompleted = "Step1";
                     eppicStepResultRecord.Status = "Eppic Record found in Hospital List - Pass/Stop no need to go to Step 2";
-                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                    _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
                 }
             }
             if (Globals.inputEppicRecordsNotInHospitalDB != null && (Globals.inputEppicRecordsNotInHospitalDB.Count() > 0))
@@ -99,7 +99,7 @@ namespace api_process_runner_api.Util
                     eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
                     eppicStepResultRecord.LastStepCompleted = "Step1";
                     eppicStepResultRecord.Status = "Eppic Record not found in Hospital List - Fail go to Step 2";
-                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                    _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
                 }
             }
             _jobstatus.Status = "Step 1 completed";
@@ -131,7 +131,7 @@ namespace api_process_runner_api.Util
                     eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
                     eppicStepResultRecord.LastStepCompleted = "Step2";
                     eppicStepResultRecord.Status = "Eppic Record found match in Giact - Continue to Step 3";
-                    _epicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
+                    _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
 
                 }
             }
@@ -184,17 +184,21 @@ namespace api_process_runner_api.Util
                     //var siebeldataRecords = _datahelper.SiebelDataRecords;
                     var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID(record.PersonID ?? "");
                     var verificationsCompletedJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    // JsonSerrializer can thow an exception so really need a try/catch
                     VerificationCompleted? verificationcompleted = JsonSerializer.Deserialize<VerificationCompleted>(verificationsCompletedJson);
                     
                     // Lets get the Fraud Concluson from AI we need to use a special POCO call to collect those details so we can log it to file.
-                    var fraudConclusionJson = await callLogChecker.CheckFraudConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    var fraudConclusionJson = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    // JsonSerrializer can thow an exception so really need a try/catch
                     FraudConclusion? fraudConclusion = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson);
 
 
                     var verificationConclusionJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    // JsonSerrializer can thow an exception so really need a try/catch
                     VerificationConclusion? verificationConclusion = JsonSerializer.Deserialize<VerificationConclusion>(fraudConclusionJson);
 
                     var actionConclusionJson = await callLogChecker.CheckActionConclusionAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+                    // JsonSerrializer can thow an exception so really need a try/catch
                     ActionConclusion? actionConclusion = JsonSerializer.Deserialize<ActionConclusion>(actionConclusionJson);
 
                     if (verificationcompleted?.VerificationsCompleted == "Yes")

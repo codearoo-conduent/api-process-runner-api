@@ -395,7 +395,7 @@ namespace api_process_runner_api.Helpers
                     {
                         // TBD Needs to be debugged it's printing out like 20 items when there are only 5
 
-                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step",false);
+                        stepLogger.AddItem(record, "Step 1 - Eppic Records Not in Hospital List", "FAIL Go to next Step");
                     }
                 }
                 // if step3a failed, we can log the issue here

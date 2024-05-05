@@ -8,7 +8,7 @@ namespace api_process_runner_api.Helpers.Reporting
     {
         private List<FraudConclusion> _fraudConclusionResults = new List<FraudConclusion>();
         public List<FraudConclusion> FraudConclusoinResults { get { return _fraudConclusionResults; } }
-
+        private bool _headercreated=false;
         // Method to add or update an item
         public void AddOrUpdateFraudConclusion(FraudConclusion newItem)
         {
@@ -42,10 +42,15 @@ namespace api_process_runner_api.Helpers.Reporting
 
         private void WriteToLocalCsv()
         {
-            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\FraudConclusionResults.csv";
+            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\FraudConclusionResults_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid().ToString().Substring(0, 8)}.csv";
 
             using (StreamWriter writer = new StreamWriter(csvFilePath))
             {
+                if (!_headercreated)
+                {
+                    writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
+                    _headercreated = true;
+                }
                 foreach (var item in _fraudConclusionResults)
                 {
                     writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");
@@ -77,6 +82,11 @@ namespace api_process_runner_api.Helpers.Reporting
             {
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
+                    if (!_headercreated)
+                    {
+                        writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
+                        _headercreated = true;
+                    }
                     foreach (var item in _fraudConclusionResults)
                     {
                         writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");

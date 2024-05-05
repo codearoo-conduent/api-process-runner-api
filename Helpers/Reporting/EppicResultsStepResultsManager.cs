@@ -3,6 +3,7 @@ using api_process_runner_api.Util;
 using System.Collections;
 using System.Reflection.Metadata;
 using Azure.Storage.Blobs;
+using api_process_runner_api.Models;
 namespace api_process_runner_api.Helpers.Reporting
 {
     public class EppicStepResultsManager
@@ -10,10 +11,11 @@ namespace api_process_runner_api.Helpers.Reporting
         private List<EppicStepResults> _eppicStepsResults = new List<EppicStepResults>();
 
         public List<EppicStepResults> EppicStepResults { get { return _eppicStepsResults; } }
+        private bool _headercreated = false;
 
         // Method to add a new item
         public void AddOrUpdateEppicStepResult(EppicStepResults newItem)
-        {
+        {                 
             var existingItem = _eppicStepsResults.FirstOrDefault(item => item.LogID == newItem.LogID);
 
             if (existingItem == null)
@@ -54,10 +56,15 @@ namespace api_process_runner_api.Helpers.Reporting
 
         private void WriteToLocalCsv()
         {
-            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\EppicStepResults.csv";
+            string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\EppicStepResults_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid().ToString().Substring(0, 8)}.csv";
 
             using (StreamWriter writer = new StreamWriter(csvFilePath))
             {
+                if (!_headercreated)
+                {
+                    writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
+                   _headercreated = true;
+                }
                 foreach (var item in _eppicStepsResults)
                 {
                     writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
@@ -88,6 +95,11 @@ namespace api_process_runner_api.Helpers.Reporting
             {
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
+                    if (!_headercreated)
+                    {
+                        writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
+                        _headercreated = true;
+                    }
                     foreach (var item in _eppicStepsResults)
                     {
                         writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");

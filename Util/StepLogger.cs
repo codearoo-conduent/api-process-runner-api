@@ -121,21 +121,13 @@ public class StepLogger
         }
     }
 
-    public void AddItem(EppicRecords record, string stepTitle, string status, bool useAIRecord = false, EppicRecordAIConclusion? eppicrecordaiconclusion = null)
+    public void AddItem(EppicRecords record, string stepTitle, string status)
     {
         var step = processSteps.FirstOrDefault(a => a.Title == stepTitle && a.Status == status);
         if (step == null)
         {
             step = new ProcessStep() { Title = stepTitle, Status = status, EppicRecords = new List<EppicRecords>() };
             processSteps.Add(step);
-        }
-        if (useAIRecord)
-        {
-            // step.EppicRecords?.Add(eppicrecordaiconclusion);
-        }
-        else  // Use the normal Eppic Record\
-        {
-            step.EppicRecords?.Add(record);
         }
         step.EppicRecords?.Add(record);
     }
