@@ -39,13 +39,16 @@ public class StepLogger
     /// <param name="status"></param>
     public void AddItem(EppicRecord record, string stepTitle, string status)
     {
-        var step = (from a in this.processSteps 
-                    where a.Title == stepTitle where a.Status == status select a).FirstOrDefault();
-        step ??= new ProcessStep() { Title = stepTitle, Status = status, EppicRecords = [] };
-
-        step.EppicRecords.Add(record); // This seems impossible: Warning CS8602  Dereference of a possibly null reference.api 
-
-        this.processSteps.Add(step);
+        var step = (from a in this.processSteps
+                    where a.Title == stepTitle
+                    where a.Status == status
+                    select a).FirstOrDefault();
+        if (step == null)
+        {
+            step = new ProcessStep() { Title = stepTitle, Status = status, EppicRecords = [] };
+            this.processSteps.Add(step);
+        }
+        step.EppicRecords?.Add(record);
     }
 
     /* expected output
@@ -110,7 +113,7 @@ public class StepLogger
             };
             var e2 = new EppicRecord()
             {
-                PersonID = "1"
+                PersonID = "2"
             };
 
             logger.AddItem(e1, "step 1", "passed");
