@@ -22,7 +22,7 @@ namespace api_process_runner_api.Helpers.Reporting
             //if (existingItem == null)
             //{
             //    // Add new item
-            //    _actionConclusionResults.Add(newItem);
+              _actionConclusionResults.Add(newItem);
             //}
             //else
             //{

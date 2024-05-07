@@ -17,7 +17,7 @@ namespace api_process_runner_api.Helpers.Reporting
         public void AddOrUpdateEppicStepResult(EppicStepResults newItem)
         {           
             // So for EPPIC Records there is only one record so when we make updates we need to check for the item and update it
-            var existingItem = _eppicStepsResults.FirstOrDefault(item => item.LogID == newItem.LogID);
+            var existingItem = _eppicStepsResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
 
             if (existingItem == null)
             {
@@ -29,6 +29,7 @@ namespace api_process_runner_api.Helpers.Reporting
                 // Update existing item
                 existingItem.LogDate = newItem.LogDate;
                 existingItem.PersonID = newItem.PersonID;
+                existingItem.MarkedAsFraud = newItem.MarkedAsFraud;
                 existingItem.PhoneNumber = newItem.PhoneNumber;
                 existingItem.AddressLine1 = newItem.AddressLine1;
                 existingItem.AddressLine2 = newItem.AddressLine2;
@@ -40,6 +41,7 @@ namespace api_process_runner_api.Helpers.Reporting
                 existingItem.Step3PassedVerificationCheck = newItem.Step3PassedVerificationCheck;
                 existingItem.Step3aPassedOTPPhoneGiact = newItem.Step3aPassedOTPPhoneGiact;
                 existingItem.LastStepCompleted = newItem.LastStepCompleted;
+                existingItem.Status = newItem.Status;
             }
         }
 
@@ -63,12 +65,12 @@ namespace api_process_runner_api.Helpers.Reporting
             {
                 if (!_headercreated)
                 {
-                    writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
+                    writer.WriteLine($"LogID,LogDate,PersonID,MarkedAsFraud,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
                    _headercreated = true;
                 }
                 foreach (var item in _eppicStepsResults)
                 {
-                    writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
+                    writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.MarkedAsFraud},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
                 }
             }
         }
@@ -98,12 +100,12 @@ namespace api_process_runner_api.Helpers.Reporting
                 {
                     if (!_headercreated)
                     {
-                        writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
+                        writer.WriteLine($"LogID,LogDate,PersonID,MarkedAsFraud,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
                         _headercreated = true;
                     }
                     foreach (var item in _eppicStepsResults)
                     {
-                        writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
+                        writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.MarkedAsFraud},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
                     }
 
                     writer.Flush();

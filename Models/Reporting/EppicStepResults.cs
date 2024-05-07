@@ -5,6 +5,7 @@
         public string? LogID { get; set; }
         public string? LogDate { get; set; }
         public string? PersonID { get; set; }
+        public bool? MarkedAsFraud { get; set; }
         public string? PhoneNumber { get; set; }
         public string? AddressLine1 { get; set; }
         public string? AddressLine2 { get; set; }
