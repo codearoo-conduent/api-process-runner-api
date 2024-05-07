@@ -65,19 +65,6 @@ namespace api_process_runner_api.Helpers.Reporting
             var engineEppic = new FileHelperEngine<EppicStepResults>();
             engineEppic.HeaderText = engineEppic.GetFileHeader();
             engineEppic.WriteFile(csvFilePath, _eppicStepsResults);
-
-            //using (StreamWriter writer = new StreamWriter(csvFilePath))
-            //{
-            //    if (!_headercreated)
-            //    {
-            //        writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
-            //       _headercreated = true;
-            //    }
-            //    foreach (var item in _eppicStepsResults)
-            //    {
-            //        writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
-            //    }
-            //}
         }
         private void WriteToAzureBlob()
         {
@@ -107,17 +94,6 @@ namespace api_process_runner_api.Helpers.Reporting
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
                     engineEppic.WriteStream(writer, _eppicStepsResults);
-
-
-                    //if (!_headercreated)
-                    //{
-                    //    writer.WriteLine($"LogID,LogDate,PersonID,PhoneNumber,AddressLine1,AddressLine2,City,State,Zip,Step1HospitalMatch,Step2GiactMatch,Step3PassedVerificationCheck,Step3aPassedOTPPhoneGiact,LastStepCompleted,Status");
-                    //    _headercreated = true;
-                    //}
-                    //foreach (var item in _eppicStepsResults)
-                    //{
-                    //    writer.WriteLine($"{item.LogID},{item.LogDate},{item.PersonID},{item.PhoneNumber},{item.AddressLine1},{item.AddressLine2},{item.City},{item.State},{item.Zip},{item.Step1HospitalMatch},{item.Step2GiactMatch},{item.Step3PassedVerificationCheck},{item.Step3aPassedOTPPhoneGiact},{item.LastStepCompleted},{item.Status}");
-                    //}
 
                     writer.Flush();
                     memoryStream.Position = 0;

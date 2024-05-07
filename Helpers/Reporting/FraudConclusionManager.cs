@@ -51,18 +51,6 @@ namespace api_process_runner_api.Helpers.Reporting
             fileEngine.HeaderText = fileEngine.GetFileHeader();
             fileEngine.WriteFile(csvFilePath, _fraudConclusionResults);
 
-            //using (StreamWriter writer = new StreamWriter(csvFilePath))
-            //{
-            //    if (!_headercreated)
-            //    {
-            //        writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
-            //        _headercreated = true;
-            //    }
-            //    foreach (var item in _fraudConclusionResults)
-            //    {
-            //        writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");
-            //    }
-            //}
         }
 
         private void WriteToAzureBlob()
@@ -93,15 +81,6 @@ namespace api_process_runner_api.Helpers.Reporting
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
                     fileEngine.WriteStream(writer, _fraudConclusionResults);
-                    //if (!_headercreated)
-                    //{
-                    //    writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
-                    //    _headercreated = true;
-                    //}
-                    //foreach (var item in _fraudConclusionResults)
-                    //{
-                    //    writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");
-                    //}
 
                     writer.Flush();
                     memoryStream.Position = 0;

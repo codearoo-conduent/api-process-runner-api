@@ -58,20 +58,6 @@ namespace api_process_runner_api.Helpers.Reporting
             var fileEngine = new FileHelperEngine<ActionConclusion>();
             fileEngine.HeaderText = fileEngine.GetFileHeader();
             fileEngine.WriteFile(csvFilePath, _actionConclusionResults);
-
-
-            //using (StreamWriter writer = new StreamWriter(csvFilePath))
-            //{
-            //    if (!_headercreated)
-            //    {
-            //        writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
-            //        _headercreated = true;
-            //    }
-            //    foreach (var item in _actionConclusionResults)
-            //    {
-            //        writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");
-            //    }
-            //}
         }
 
         private void WriteToAzureBlob()
@@ -102,15 +88,6 @@ namespace api_process_runner_api.Helpers.Reporting
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
                     fileEngine.WriteStream(writer, _actionConclusionResults);
-                    //if (!_headercreated)
-                    //{
-                    //    writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
-                    //    _headercreated = true;
-                    //}
-                    //foreach (var item in _actionConclusionResults)
-                    //{
-                    //    writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");
-                    //}
 
                     writer.Flush();
                     memoryStream.Position = 0;

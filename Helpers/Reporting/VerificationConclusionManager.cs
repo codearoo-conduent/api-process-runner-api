@@ -51,18 +51,6 @@ namespace api_process_runner_api.Helpers.Reporting
             fileEngine.HeaderText = fileEngine.GetFileHeader();
             fileEngine.WriteFile(csvFilePath, _verificationConclusionResults);
 
-            //using (StreamWriter writer = new StreamWriter(csvFilePath))
-            //{
-            //    if (!_headercreated)
-            //    {
-            //        writer.WriteLine($"PersonID,ActivityRelatedTo,FormOfAuthentication,PhoneNumber,VerificationsCompleted");
-            //        _headercreated = true;
-            //    }
-            //    foreach (var item in _verificationConclusionResults)
-            //    {
-            //        writer.WriteLine($"{item.PersonID},{item.ActivityRelatedTo},{item.FormOfAuthentication},{item.PhoneNumber},{item.VerificationsCompleted}");
-            //    }
-            //}
         }
 
         private void WriteToAzureBlob()
@@ -93,15 +81,6 @@ namespace api_process_runner_api.Helpers.Reporting
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
                     fileEngine.WriteStream(writer, _verificationConclusionResults);
-                    //if (!_headercreated)
-                    //{
-                    //    writer.WriteLine($"PersonID,ActivityRelatedTo,FormOfAuthentication,PhoneNumber,VerificationsCompleted");
-                    //    _headercreated = true;
-                    //}
-                    //foreach (var item in _verificationConclusionResults)
-                    //{
-                    //    writer.WriteLine($"{item.PersonID},{item.ActivityRelatedTo},{item.FormOfAuthentication},{item.PhoneNumber},{item.VerificationsCompleted}");
-                    //}
 
                     writer.Flush();
                     memoryStream.Position = 0;
