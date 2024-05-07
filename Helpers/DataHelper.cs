@@ -112,19 +112,6 @@ namespace api_process_runner_api.Helpers
                     {
                         _hospitalShelterDataParser.LoadData(stream);
                     }
-                    _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
-                    _eppicdataRecords = _eppicDataParser.ParseCsv();
-                    _siebeldataRecords = _siebelDataParser.ParseCsv();
-                    _giactdataRecords = _giactDataParser.ParseCsv();
-                    Globals.hospitalRecords = _hospitaldataRecords;
-                    Globals.eppicRecords = _eppicdataRecords;
-                    Globals.siebelRecords = _siebeldataRecords;
-                    Globals.giactRecords = _giactdataRecords;
-                    Step1_BuildEppicListWithMatchesInHospital();
-                    Step1_BuildEppicListWithoutInAgainstHospital();
-                    Step2_BuildEppicListWithMatchesInGiact();
-                    Step2_BuildEppicListWithMatchesNotInGiact();
-                    result = "Success";
                 }
                 catch (Exception e) 
                 { 
@@ -165,6 +152,21 @@ namespace api_process_runner_api.Helpers
                     return result = "Failed to load stream";
                 }
             }
+
+            _hospitaldataRecords = _hospitalShelterDataParser.ParseCsv();
+            _eppicdataRecords = _eppicDataParser.ParseCsv();
+            _siebeldataRecords = _siebelDataParser.ParseCsv();
+            _giactdataRecords = _giactDataParser.ParseCsv();
+            Globals.hospitalRecords = _hospitaldataRecords;
+            Globals.eppicRecords = _eppicdataRecords;
+            Globals.siebelRecords = _siebeldataRecords;
+            Globals.giactRecords = _giactdataRecords;
+            Step1_BuildEppicListWithMatchesInHospital();
+            Step1_BuildEppicListWithoutInAgainstHospital();
+            Step2_BuildEppicListWithMatchesInGiact();
+            Step2_BuildEppicListWithMatchesNotInGiact();
+            result = "Success";
+
             return result;
         }
 
