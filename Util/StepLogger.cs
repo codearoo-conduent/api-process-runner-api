@@ -64,7 +64,7 @@ public class StepLogger
         BlobHelper blobHelper = new BlobHelper()
         {
             ConnectionString = _blobConnection,
-            Container = "Logs"
+            Container = "logs"
         };
         var result = "";
         if (usingLocalFiles)

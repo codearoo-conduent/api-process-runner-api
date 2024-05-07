@@ -63,14 +63,9 @@ namespace api_process_runner_api.Helpers.Reporting
         private void WriteToAzureBlob()
         {
             var _blobConnection = Helper.GetEnvironmentVariable("BlobConnection");
-            var _blobHelper = new BlobHelper()
-            {
-                Container = "CSVResults",
-                ConnectionString = _blobConnection
-            };
 
             string connectionString = _blobConnection;
-            string containerName = "CVSResults";
+            string containerName = "csvresults";
 
             BlobServiceClient blobServiceClient = new BlobServiceClient(_blobConnection);
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
