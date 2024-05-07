@@ -1,6 +1,7 @@
 ﻿using api_process_runner_api.Models.Reporting;
 using api_process_runner_api.Util;
 using Azure.Storage.Blobs;
+using FileHelpers;
 
 namespace api_process_runner_api.Helpers.Reporting
 {
@@ -46,18 +47,10 @@ namespace api_process_runner_api.Helpers.Reporting
         {
             string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\FraudConclusionResults_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid().ToString().Substring(0, 8)}.csv";
 
-            using (StreamWriter writer = new StreamWriter(csvFilePath))
-            {
-                if (!_headercreated)
-                {
-                    writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
-                    _headercreated = true;
-                }
-                foreach (var item in _fraudConclusionResults)
-                {
-                    writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");
-                }
-            }
+            var fileEngine = new FileHelperEngine<FraudConclusion>();
+            fileEngine.HeaderText = fileEngine.GetFileHeader();
+            fileEngine.WriteFile(csvFilePath, _fraudConclusionResults);
+
         }
 
         private void WriteToAzureBlob()
@@ -75,19 +68,14 @@ namespace api_process_runner_api.Helpers.Reporting
 
             BlobClient blobClient = containerClient.GetBlobClient(fileName);
 
+            var fileEngine = new FileHelperEngine<FraudConclusion>();
+            fileEngine.HeaderText = fileEngine.GetFileHeader();
+
             using (MemoryStream memoryStream = new MemoryStream())
             {
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
-                    if (!_headercreated)
-                    {
-                        writer.WriteLine($"PersonID,FraudConclusionNote,FraudConclusionType,Recommendation");
-                        _headercreated = true;
-                    }
-                    foreach (var item in _fraudConclusionResults)
-                    {
-                        writer.WriteLine($"{item.PersonID},{item.FraudConclusionNote},{item.FraudConclusionType},{item.Recommendation}");
-                    }
+                    fileEngine.WriteStream(writer, _fraudConclusionResults);
 
                     writer.Flush();
                     memoryStream.Position = 0;

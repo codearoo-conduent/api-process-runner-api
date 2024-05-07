@@ -1,6 +1,7 @@
 ﻿using api_process_runner_api.Models.Reporting;
 using api_process_runner_api.Util;
 using Azure.Storage.Blobs;
+using FileHelpers;
 
 namespace api_process_runner_api.Helpers.Reporting
 {
@@ -14,10 +15,8 @@ namespace api_process_runner_api.Helpers.Reporting
         // Method to add or update an item
         public void AddOrUpdateActionConclusion(ActionConclusion newItem)
         {
-            // Important Note: Add new item as there can be multiple items ins SEIBEL call notes so we need the results for each item.
+            //Important Note: Add new item as there can be multiple items ins SEIBEL call notes so we need the results for each item.
 
-            //_actionConclusionResults.Add(newItem);
-            //var existingItem = _actionConclusionResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
 
             //if (existingItem == null)
             //{
@@ -56,18 +55,9 @@ namespace api_process_runner_api.Helpers.Reporting
         {
             string csvFilePath = $@"{Constants.LocalFilePath}\CSVResults\ActionConclusionResults_{DateTime.Now:yyyyMMdd}_{Guid.NewGuid().ToString().Substring(0, 8)}.csv";
 
-            using (StreamWriter writer = new StreamWriter(csvFilePath))
-            {
-                if (!_headercreated)
-                {
-                    writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
-                    _headercreated = true;
-                }
-                foreach (var item in _actionConclusionResults)
-                {
-                    writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");
-                }
-            }
+            var fileEngine = new FileHelperEngine<ActionConclusion>();
+            fileEngine.HeaderText = fileEngine.GetFileHeader();
+            fileEngine.WriteFile(csvFilePath, _actionConclusionResults);
         }
 
         private void WriteToAzureBlob()
@@ -85,19 +75,14 @@ namespace api_process_runner_api.Helpers.Reporting
 
             BlobClient blobClient = containerClient.GetBlobClient(fileName);
 
+            var fileEngine = new FileHelperEngine<ActionConclusion>();
+            fileEngine.HeaderText = fileEngine.GetFileHeader();
+
             using (MemoryStream memoryStream = new MemoryStream())
             {
                 using (StreamWriter writer = new StreamWriter(memoryStream))
                 {
-                    if (!_headercreated)
-                    {
-                        writer.WriteLine($"PersonID,CallerAuthenticated,FormOfAuthentication,ThirdPartyInvolved,WasCallTransferred,PhoneUpdateFrom,PhoneUpdateTo,PhoneChanged,AddressChanged,AddressUpdateFrom,AddressUpdateTo");
-                        _headercreated = true;
-                    }
-                    foreach (var item in _actionConclusionResults)
-                    {
-                        writer.WriteLine($"{item.PersonID},{item.CallerAuthenticated},{item.FormOfAuthentication},{item.ThirdPartyInvolved},{item.WasCallTransferred},{item.PhoneUpdateFrom},{item.PhoneUpdateTo},{item.PhoneChanged},{item.AddressChanged},{item.AddressUpdateFrom},{item.AddressUpdateTo}");
-                    }
+                    fileEngine.WriteStream(writer, _actionConclusionResults);
 
                     writer.Flush();
                     memoryStream.Position = 0;
