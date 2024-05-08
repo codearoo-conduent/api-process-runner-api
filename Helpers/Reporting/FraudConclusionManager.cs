@@ -13,22 +13,20 @@ namespace api_process_runner_api.Helpers.Reporting
         // Method to add or update an item
         public void AddOrUpdateFraudConclusion(FraudConclusion newItem)
         {   
-            // Important Note: Add new item as there can be multiple items ins SEIBEL call notes so we need the results for each item.
-            _fraudConclusionResults.Add(newItem);
-            //var existingItem = _fraudConclusionResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
+            var existingItem = _fraudConclusionResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
 
-            //if (existingItem == null)
-            //{
-            //    // Add new item
-            //    _fraudConclusionResults.Add(newItem);
-            //}
-            //else
-            //{
-            //    // Update existing item
-            //    existingItem.FraudConclusionNote = newItem.FraudConclusionNote;
-            //    existingItem.FraudConclusionType = newItem.FraudConclusionType;
-            //    existingItem.Recommendation = newItem.Recommendation;
-            //}
+            if (existingItem == null)
+            {
+                // Add new item
+                _fraudConclusionResults.Add(newItem);
+            }
+            else
+            {
+                // Update existing item
+                existingItem.FraudConclusionNote = newItem.FraudConclusionNote;
+                existingItem.FraudConclusionType = newItem.FraudConclusionType;
+                existingItem.Recommendation = newItem.Recommendation;
+            }
         }
 
         public void WriteToCsv(bool useLocalFiles)

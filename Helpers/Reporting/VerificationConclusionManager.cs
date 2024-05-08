@@ -14,22 +14,20 @@ namespace api_process_runner_api.Helpers.Reporting
         // Method to add or update an item
         public void AddOrUpdateVerificationConclusion(VerificationConclusion newItem)
         {
-            _verificationConclusionResults.Add(newItem);
-            ////var existingItem = _verificationConclusionResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
+            var existingItem = _verificationConclusionResults.FirstOrDefault(item => item.PersonID == newItem.PersonID);
 
-            ////if (existingItem == null)
-            ////{
-            ////    // Add new item
-            ////    _verificationConclusionResults.Add(newItem);
-            ////}
-            ////else
-            ////{
-            //// Update existing item
-            //existingItem.ActivityRelatedTo = newItem.ActivityRelatedTo;
-            //    existingItem.FormOfAuthentication = newItem.FormOfAuthentication;
-            //    existingItem.PhoneNumber = newItem.PhoneNumber;
-            //    existingItem.VerificationsCompleted = newItem.VerificationsCompleted;
-            ////}
+            if (existingItem == null)
+            {
+                // Add new item
+                _verificationConclusionResults.Add(newItem);
+            }
+            else
+            {
+                existingItem.ActivityRelatedTo = newItem.ActivityRelatedTo;
+                existingItem.FormOfAuthentication = newItem.FormOfAuthentication;
+                existingItem.PhoneNumber = newItem.PhoneNumber;
+                existingItem.VerificationsCompleted = newItem.VerificationsCompleted;
+            }
         }
         public void WriteToCsv(bool useLocalFiles)
         {
