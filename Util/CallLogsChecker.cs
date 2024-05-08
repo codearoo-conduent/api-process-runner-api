@@ -17,8 +17,14 @@ namespace api_process_runner_api.Util
         private string _promptVerificationConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
-         Return the Verification Conclusion of the query. The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication, Phone Number properties. The phone number will contain 10 digits and may or may not have dashes. If there are multiple numbers listed, identify the most recent, updated phone number. If there is no phone number, return 'no phone number'.
-         If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.  ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verification' or 'One Time Passcode' before VerficationsCompleted can be set to 'Yes', otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
+        Return the Verification Conclusion of the query.
+        The Verification Conclusion must be in the format of JSON that consists of PersonID, ActivityRelatedTo, FormOfAuthentication, Phone Number properties.
+        The phone number will contain 10 digits and may or may not have dashes.
+        If there are multiple numbers listed, identify the most recent, updated phone number.
+        If there is no phone number, return 'no phone number'.
+        If ActivityRelatedTo is not 'Inbound Call' VerificationCompleted should be set to 'No'.
+        ActivityRelatedTo must be set to 'Inbound Call' and FormOfAuthentication must be 'KBA' or 'ID Verification' or 'One Time Passcode' before VerficationsCompleted can be set to 'Yes'
+            , otherwise VerficationsCompleted must be set to 'No'. The JSON format should be:
         [JSON]
                {
                   'PersonID': '12345',
@@ -61,7 +67,12 @@ namespace api_process_runner_api.Util
         private string _promptFraudConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
-         Return the Fraud Conclusion intent of the query. The Fraud Conclusion must be in the format of JSON that consists of FraudConclusionNotes, FraudConclusionType, Recommendation properties. The FraudConclusionNotes should a short summary based on your review of the query.  The FraudConclusionType should be either 'No Fraud Detected' or 'Possible Account Takeover'.  The Recommendation should be your recommendations for futher action based on your conclusions. The JSON format should be:
+        Return the Fraud Conclusion intent of the query.
+        The Fraud Conclusion must be in the format of JSON that consists of FraudConclusionNotes, FraudConclusionType, Recommendation properties.
+        The FraudConclusionNotes should a short summary based on your review of the query.
+        The FraudConclusionType should be either 'No Fraud Detected' or 'Possible Account Takeover'.
+        The Recommendation should be your recommendations for futher action based on your conclusions.
+        The JSON format should be:
         [JSON]
                {
                   'PersonID': '12345',
@@ -84,7 +95,10 @@ namespace api_process_runner_api.Util
         private string _promptActionConclusion = @"PersonID: {{$personid}}
         {{$query}}
 
-        Return the Action Conclusion intent of the query. The Acton Conclusion must be in the format of JSON that consists of PersonID, CallerAuthenticated, FormOfAuthentication, ThirdPartyInvolved, WasCallTransferred, PhoneUpdateFrom, PhoneUpdatedTo, PhoneChanged, AddressChanged, AddressUpdateFrom, AddressUpdateTo properties. The JSON format should be:
+        Return the Action Conclusion intent of the query.
+        The Acton Conclusion must be in the format of JSON that consists of 
+            PersonID, CallerAuthenticated, FormOfAuthentication, ThirdPartyInvolved, WasCallTransferred, PhoneUpdateFrom, PhoneUpdatedTo, PhoneChanged, AddressChanged, AddressUpdateFrom, AddressUpdateTo properties.
+        The JSON format should be:
 
         [JSON]
               {
