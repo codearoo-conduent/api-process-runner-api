@@ -146,6 +146,8 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            timerCallback = new TimerCallback(OnTimerElapsed);
+            var timer = new Timer(timerCallback, null, 10 * 1000, 10 * 1000);
             var startTime = DateTime.UtcNow;
             try
             {
@@ -155,10 +157,12 @@ namespace api_process_runner_api.Util
             }
             catch (Exception ex)
             {
+                timer.Dispose();
                 Console.WriteLine(ex);
             }
             finally
             {
+                timer.Dispose();
                 Console.WriteLine($"Duration of Semantic Kernel for CheckVerificationIntentAsync: { DateTime.UtcNow - startTime } ");
             }
             return result ?? "";
@@ -175,6 +179,8 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            timerCallback = new TimerCallback(OnTimerElapsed);
+            var timer = new Timer(timerCallback, null, 10 * 1000, 10 * 1000);
             var startTime = DateTime.UtcNow;
             try
             {
@@ -188,6 +194,7 @@ namespace api_process_runner_api.Util
             }
             finally
             {
+                timer.Dispose();
                 Console.WriteLine($"Duration of Semantic Kernel for CheckFraudIntentAsync: {DateTime.UtcNow - startTime} ");
             }
             return result ?? "";
@@ -204,6 +211,9 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            timerCallback = new TimerCallback(OnTimerElapsed);
+            var timer = new Timer(timerCallback, null, 10 * 1000, 10 * 1000);
+
             var startTime = DateTime.UtcNow;
             try
             {
@@ -217,9 +227,16 @@ namespace api_process_runner_api.Util
             }
             finally
             {
+                timer.Dispose();
                 Console.WriteLine($"Duration of Semantic Kernel for CheckActionConclusionAsync: {DateTime.UtcNow - startTime} ");
             }
             return result ?? "";
+        }
+
+        static TimerCallback timerCallback;
+        static void OnTimerElapsed(object state)
+        {
+            Console.WriteLine("Still working...");
         }
     }
 }
