@@ -132,6 +132,7 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            var startTime = DateTime.UtcNow;
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
@@ -141,6 +142,10 @@ namespace api_process_runner_api.Util
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+            finally
+            {
+                Console.WriteLine($"Duration of Semantic Kernel for CheckVerificationIntentAsync: { DateTime.UtcNow - startTime } ");
             }
             return result ?? "";
         }
@@ -156,6 +161,7 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            var startTime = DateTime.UtcNow;
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
@@ -165,6 +171,10 @@ namespace api_process_runner_api.Util
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+            finally
+            {
+                Console.WriteLine($"Duration of Semantic Kernel for CheckFraudIntentAsync: {DateTime.UtcNow - startTime} ");
             }
             return result ?? "";
         }
@@ -180,6 +190,7 @@ namespace api_process_runner_api.Util
 
             KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
             string result = "";
+            var startTime = DateTime.UtcNow;
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
@@ -189,6 +200,10 @@ namespace api_process_runner_api.Util
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+            finally
+            {
+                Console.WriteLine($"Duration of Semantic Kernel for CheckActionConclusionAsync: {DateTime.UtcNow - startTime} ");
             }
             return result ?? "";
         }
