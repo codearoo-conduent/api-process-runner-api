@@ -99,12 +99,14 @@ namespace api_process_runner_api.Helpers.Parsers
             return _siebelCallNotes.FirstOrDefault(note => note.PersonID == personID);
         }
 
-        public List<SiebelCallNotes> FindAllSiebelCallNotesByPersonID(string personID)
+        public List<SiebelCallNotes> FindAllSiebelCallNotesByPersonIDLastFirst(string personID)
         {
             if (_siebelCallNotes == null)
                 return new List<SiebelCallNotes>(); // If _siebelCallNotes is null, return an empty list
 
-            return _siebelCallNotes.Where(note => note.PersonID == personID).ToList();
+            return _siebelCallNotes.Where(note => note.PersonID == personID)
+                .OrderByDescending(note => note.ActivityCreatedDate)
+                .ToList();
         }
 
     }

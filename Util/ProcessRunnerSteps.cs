@@ -202,7 +202,7 @@ namespace api_process_runner_api.Util
                 {
                     // get a ref to the sibeldataRecords first
                     //var siebeldataRecords = _datahelper.SiebelDataRecords;
-                    var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID(record.PersonID ?? "");
+                    var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonIDLastFirst(record.PersonID ?? "");
 
                     var verificationsCompletedJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
                     // JsonSerrializer can thow an exception so really need a try/catch

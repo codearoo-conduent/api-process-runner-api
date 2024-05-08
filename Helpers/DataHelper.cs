@@ -358,7 +358,7 @@ namespace api_process_runner_api.Helpers
                 var siebeldataRecords = dataHelper.SiebelDataRecords;
                 // get a record with callnotes
                 //var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID("5094334");
-                var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonID("6488958");
+                var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonIDLastFirst("6488958");
                 var verificationsCompletedResult1 = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
 
                 var verificationsCompletedResult2 = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
