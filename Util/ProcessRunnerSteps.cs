@@ -113,6 +113,7 @@ namespace api_process_runner_api.Util
                 }
             }
             _jobstatus.Status = "Step 1 completed";
+            Console.WriteLine(_jobstatus.Status);
             #endregion
 
             #region Step 2: Check Eppic Address against GIACT only if last step is set to Pass
@@ -121,10 +122,10 @@ namespace api_process_runner_api.Util
             // In the DataHelper.Initilize() when we load the data we build a list of Epic items that have an exact match in Giact and list that does not have a match
             // Now, all we have to do is log the result to the Log collection!
 
-            if (Globals.inputEppicRecordsInGiactDB != null && (Globals.inputEppicRecordsInGiactDB.Count() > 0))
+            if (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB != null && (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.Count() > 0))
             {
                 // Let's add the items that have a match in Hospital DB to the Log Collection
-                var eppicRecordsInGiatDB = Globals.inputEppicRecordsInGiactDB.ToList();
+                var eppicRecordsInGiatDB = Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.ToList();
                 foreach (var record in eppicRecordsInGiatDB)
                 {
                     stepLogger.AddItem(record, "Step 2 - Eppic Records in Giact DB", "Match/Contine to step 3");
@@ -151,10 +152,10 @@ namespace api_process_runner_api.Util
 
                 }
             }
-            if (Globals.inputEppicRecordsNotInGiactDB != null && (Globals.inputEppicRecordsNotInGiactDB.Count() > 0))
+            if (Globals.inputEppicRecordsNotInGiactDBNorHospitalsDB != null && (Globals.inputEppicRecordsNotInGiactDBNorHospitalsDB.Count() > 0))
             {
                 // Let's add the items that do not have match Hospital DB to the Log Collection
-                var eppicRecordsNotInGiactDB = Globals.inputEppicRecordsNotInGiactDB.ToList();
+                var eppicRecordsNotInGiactDB = Globals.inputEppicRecordsNotInGiactDBNorHospitalsDB.ToList();
                 foreach (var record in eppicRecordsNotInGiactDB)
                 {
                     stepLogger.AddItem(record, "Step 2 - Eppic Records Not in Giact DB", "Denied, marked as Fraud no need to process");
@@ -181,6 +182,7 @@ namespace api_process_runner_api.Util
                 }
             }
             _jobstatus.Status = "Step 2 completed";
+            Console.WriteLine(_jobstatus.Status);
 
             #endregion
 
@@ -194,10 +196,10 @@ namespace api_process_runner_api.Util
 
             // We need to loop through all the items that have a match in Giact DB for step 3 now
             // This logic could be moved into a function/method to simplify this section of code.
-            if (Globals.inputEppicRecordsInGiactDB != null && (Globals.inputEppicRecordsInGiactDB.Count() > 0))
+            if (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB != null && (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.Count() > 0))
             {
                 // Let's add the items that have a match in Hospital DB to the Log Collection
-                var eppicRecordsInGiactDB = Globals.inputEppicRecordsInGiactDB.ToList();
+                var eppicRecordsInGiactDB = Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.ToList();
                 foreach (var record in eppicRecordsInGiactDB)
                 {
                     // get a ref to the sibeldataRecords first
@@ -444,6 +446,7 @@ namespace api_process_runner_api.Util
                 }
             }
             _jobstatus.Status = "Step 3 - 3.a completed";
+            Console.WriteLine(_jobstatus.Status);
             #endregion
 
             #region Step 3a: Check Eppic Record Against Seibel CallNotes OTP Check only if last step is set to pass
@@ -451,6 +454,7 @@ namespace api_process_runner_api.Util
             // Need to look into how to add optional JSON data to the structure
             // In this step you can leverage basically that same type of logic that is in Step 3.
             _jobstatus.Status = "Processing Completed";
+            Console.WriteLine(_jobstatus.Status);
             #endregion
             // return "Steps have ran";
             // write the file to disk

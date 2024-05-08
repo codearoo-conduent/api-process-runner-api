@@ -56,7 +56,7 @@ namespace api_process_runner_api.Helpers.Parsers
             // Now let's filter all the records that actually have ActivityDescriptions and copy those into it's own list for use later
             _siebelCallNotes = siebelRecordsList?
                  .Where(record => record.ActivityDescription != "")
-                 .Select(record => new SiebelCallNotes { PersonID = record.PersonID, CallNotes = record.ActivityDescription })
+                 .Select(record => new SiebelCallNotes { PersonID = record.PersonID, CallNotes = record.ActivityDescription, ActivityCreatedDate = record.ActivityCreatedDate })
                  .ToList();
             // store the count of items that actually have CallNotes
             _countofCallNotes = _siebelCallNotes?.Count ?? 0;

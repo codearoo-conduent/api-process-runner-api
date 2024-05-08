@@ -20,8 +20,8 @@ namespace api_process_runner_api.Helpers
         public static List<GiactRecords>? giactRecords;
         public static IEnumerable<EppicRecords>? inputEppicRecordsInHospitalDB;
         public static IEnumerable<EppicRecords>? inputEppicRecordsNotInHospitalDB;
-        public static IEnumerable<EppicRecords>? inputEppicRecordsInGiactDB;
-        public static IEnumerable<EppicRecords>? inputEppicRecordsNotInGiactDB;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsInGiactDBNotInHospitalsDB;
+        public static IEnumerable<EppicRecords>? inputEppicRecordsNotInGiactDBNorHospitalsDB;
     }
 
     internal class DataHelper
@@ -161,114 +161,92 @@ namespace api_process_runner_api.Helpers
             Globals.eppicRecords = _eppicdataRecords;
             Globals.siebelRecords = _siebeldataRecords;
             Globals.giactRecords = _giactdataRecords;
-            Step1_BuildEppicListWithMatchesInHospital();
-            Step1_BuildEppicListWithoutInAgainstHospital();
-            Step2_BuildEppicListWithMatchesInGiact();
-            Step2_BuildEppicListWithMatchesNotInGiact();
+            Step1_BuildEppicListInHospitalsDB();
+            Step1_BuildEppicListNotInHospitalsDB();
+            Step2_BuildEppicListWithMatchesInGiactNotInHospitalsDB();
+            Step2_BuildEppicListWithMatchesNotInGiactNorHospitals();
             result = "Success";
 
             return result;
         }
 
-        public void Step1_BuildEppicListWithMatchesInHospital()
+        public void Step1_BuildEppicListInHospitalsDB()
         {
             // Builds a List of Eppic records that have a match in Hospital DB
-            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
+            Console.WriteLine($"Total eppicRecords: {Globals.eppicRecords?.Count}");
             if (Globals.hospitalRecords != null)
             {
                 Globals.inputEppicRecordsInHospitalDB =
                     from e in Globals.eppicRecords
-                    join a in Globals.hospitalRecords
-                        on new { e.AddressLine1, e.AddressLine2, e.City, e.State }
-                        equals new { a?.AddressLine1, a?.AddressLine2, a?.City, a?.State }
+                    from a in Globals.hospitalRecords
+                    where string.Compare(e?.AddressLine1?.Trim(), a?.AddressLine1?.Trim(), ignoreCase: true) == 0
+                    where string.Compare(e?.AddressLine2?.Trim(), a?.AddressLine2?.Trim(), ignoreCase: true) == 0
+                    where string.Compare(e?.City?.Trim(), a?.City?.Trim(), ignoreCase: true) == 0
+                    where string.Compare(e?.State?.Trim(), a?.State?.Trim(), ignoreCase: true) == 0
                     select e;
-                Console.WriteLine($"Recs that match in the address DB: {Globals.inputEppicRecordsInHospitalDB.Count()}");
+                Console.WriteLine($"Total inputEppicRecordsInHospitalDB: {Globals.inputEppicRecordsInHospitalDB.Count()}");
             }
             else
             {
-                // Handle the case when Globals.hospitalRecords is null
-                // For example, log a warning or provide a default value
+                throw new NullReferenceException();
             }
         }
 
-        public void Step1_BuildEppicListWithoutInAgainstHospital()
+        public void Step1_BuildEppicListNotInHospitalsDB()
         {
-            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
+            Console.WriteLine($"Total eppicRecords: {Globals.eppicRecords?.Count}");
 
             // Check if Globals.hospitalRecords is not null
-            if (Globals.hospitalRecords != null && Globals.eppicRecords != null)
+            if (Globals.inputEppicRecordsInHospitalDB != null && Globals.eppicRecords != null)
             {
                 // Find Eppic records that do not match in the hospitalRecords
                 Globals.inputEppicRecordsNotInHospitalDB =
-                    Globals.eppicRecords.Except(
-                        from e in Globals.eppicRecords
-                        join a in Globals.hospitalRecords
-                            on new { e.AddressLine1, e.AddressLine2, e.City, e.State }
-                            equals new { a?.AddressLine1, a?.AddressLine2, a?.City, a?.State }
-                        select e);
+                    Globals.eppicRecords.Except(Globals.inputEppicRecordsInHospitalDB);
 
-                Console.WriteLine($"Recs not matching in the address DB: {Globals.inputEppicRecordsNotInHospitalDB.Count()}");
+                Console.WriteLine($"Total inputEppicRecordsNotInHospitalDB: {Globals.inputEppicRecordsNotInHospitalDB.Count()}");
             }
             else
             {
-                // Handle the case when Globals.hospitalRecords is null
-                // For example, log a warning or provide a default value
+                throw new NullReferenceException();
             }
         }
 
-        public void Step2_BuildEppicListWithMatchesInGiact()
+        public void Step2_BuildEppicListWithMatchesInGiactNotInHospitalsDB()
         {
-            // Builds a List of Eppic records that have a match in Hospital DB
-            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
-            if (Globals.giactRecords != null && Globals.eppicRecords != null)
+            Console.WriteLine($"Total inputEppicRecordsNotInHospitalDB: {Globals.inputEppicRecordsNotInHospitalDB?.Count()}");
+            if (Globals.giactRecords != null && Globals.inputEppicRecordsNotInHospitalDB != null)
             {
-                //Globals.inputEppicRecordsInGiactDB =
-                //    (from e in Globals.eppicRecords
-                //     join a in Globals.giactRecords
-                //        on new { e?.AddressLine1, e?.City, e?.State, e?.ZipCode }
-                //        //equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
-                //        // The line below fails on the join for some reason
-                //        equals new { a?.AddressCurrentPast, a?.CityCurrentPast, a?.StateCurrentPast, a?.ZipCodeCurrentPast }
-                //    select e).Distinct();
-                //Console.WriteLine($"Recs that match in the Giact DB: {Globals.inputEppicRecordsInGiactDB.Count()}");
 
-                Globals.inputEppicRecordsInGiactDB =
-                    (from e in Globals.eppicRecords
-                        from a in Globals.giactRecords
-                        where e.AddressLine1 == a.AddressCurrentPast &&
-                         e.City == a.CityCurrentPast &&
-                         e.State == a.StateCurrentPast &&
-                         e.ZipCode == a.ZipCodeCurrentPast
-                         select e).Distinct();
+                Globals.inputEppicRecordsInGiactDBNotInHospitalsDB =
+                    (from e in Globals.inputEppicRecordsNotInHospitalDB
+                     join a in Globals.giactRecords on e.PersonID equals a.UniqueID
+                     where string.Compare(e.AddressLine1?.Trim(), a.AddressCurrentPast?.Trim(), ignoreCase: true) == 0
+                     where string.Compare(e.City?.Trim(), a.CityCurrentPast?.Trim(), ignoreCase: true) == 0
+                     where string.Compare(e.State?.Trim(), a.StateCurrentPast?.Trim(), ignoreCase: true) == 0
+                     where string.Compare(e.ZipCode?.Trim(), a.ZipCodeCurrentPast?.Trim(), ignoreCase: true) == 0
+                     select e).Distinct();
+
+                Console.WriteLine($"Total inputEppicRecordsInGiactDBNotInHospitalsDB: {Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.Count()}");
             }
             else
             {
-                // Handle the case when Globals.hospitalRecords is null
-                // For example, log a warning or provide a default value
+                throw new NullReferenceException();
             }
         }
 
-        public void Step2_BuildEppicListWithMatchesNotInGiact()
+        public void Step2_BuildEppicListWithMatchesNotInGiactNorHospitals()
         {
-            // Builds a List of Eppic records that have a match in Hospital DB
-            Console.WriteLine($"Total Eppic records: {Globals.eppicRecords?.Count}");
-            if (Globals.giactRecords != null && Globals.eppicRecords != null)
+            Console.WriteLine($"Total inputEppicRecordsNotInHospitalDB: {Globals.inputEppicRecordsNotInHospitalDB?.Count()}");
+            if (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB != null && Globals.inputEppicRecordsNotInHospitalDB != null)
             {
-                // TBD Needs review as Giact only has AddressLine1 not AddressLine2 which Eppic has.  Also, not sure with the Addressline19 thing comes into play
-                Globals.inputEppicRecordsNotInGiactDB =
-                   Globals.eppicRecords.Except(
-                       from e in Globals.eppicRecords
-                       join a in Globals.giactRecords
-                           on new { e.AddressLine1, e.City, e.State, e.ZipCode }
-                           equals new { a?.AddressLine1, a?.City, a?.State, a?.ZipCode }
-                           //equals new { a?.AddressLine19, a?.City10, a?.State11, a?.ZipCode12 }
-                       select e);
-                Console.WriteLine($"Recs that have not match in the Giact DB: {Globals.inputEppicRecordsNotInGiactDB.Count()}");
+                Globals.inputEppicRecordsNotInGiactDBNorHospitalsDB =
+                   Globals.inputEppicRecordsNotInHospitalDB.Except(Globals.inputEppicRecordsInGiactDBNotInHospitalsDB);
+                
+                Console.WriteLine($"Total inputEppicRecordsNotInGiactDBNorHospitalsDB: {Globals.inputEppicRecordsNotInGiactDBNorHospitalsDB.Count()}");
             }
             else
             {
-                // Handle the case when Globals.hospitalRecords is null
-                // For example, log a warning or provide a default value
+                throw new NullReferenceException();
             }
         }
 
@@ -336,8 +314,8 @@ namespace api_process_runner_api.Helpers
             {
                 var hospitaldataRecords = dataHelper.HospitalDataRecords;
                 Console.WriteLine("Ready to Go, let's search for a HospitalByFullAddress. Press Enter!");
-                //var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("799 47dH bd", "", "SAN DIEGO", "CA", hospitaldataRecords ?? new List<HospitalShelterRecords>());
-                var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("3409 pLlzKEzBEfqD Dq", "", "KILLEEN", "TX", hospitaldataRecords ?? new List<HospitalShelterRecords>());
+                var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("799 47dH bd", "", "SAN DIEGO", "CA", hospitaldataRecords ?? new List<HospitalShelterRecords>());
+                //var recordswithFullAddress = dataHelper.HospitalShelterDataParser.FindHospitalByFullAddress("3409 pLlzKEzBEfqD Dq", "", "KILLEEN", "TX", hospitaldataRecords ?? new List<HospitalShelterRecords>());
                 Console.WriteLine($@"Hospital Found: {recordswithFullAddress?.AddressLine1}");
                 Console.WriteLine("Let's print out all the Hospital Records, press  Enter!");
                 dataHelper.HospitalShelterDataParser.PrintHospitalRecords(hospitaldataRecords ?? new List<HospitalShelterRecords>());
