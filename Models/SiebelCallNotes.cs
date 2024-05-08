@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +11,6 @@ namespace api_process_runner_api.Models
     {
         public string? PersonID { get; set; }
         public string? CallNotes { get; set; }
+        public string? ActivityCreatedDate {  get; set; }
     }
 }
