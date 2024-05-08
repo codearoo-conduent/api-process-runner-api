@@ -8,6 +8,7 @@ namespace api_process_runner_api.Models.Reporting
         public string? PersonID { get; set; }
         public string? FraudConclusionNote { get; set; }
         public string? FraudConclusionType { get; set; }
+        [FieldQuoted]
         public string? Recommendation { get; set; }
     }
 
