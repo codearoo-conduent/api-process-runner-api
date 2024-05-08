@@ -56,7 +56,7 @@ namespace api_process_runner_api.Helpers.Parsers
             // Now let's filter all the records that actually have ActivityDescriptions and copy those into it's own list for use later
             _siebelCallNotes = siebelRecordsList?
                  .Where(record => record.ActivityDescription != "")
-                 .Select(record => new SiebelCallNotes { PersonID = record.PersonID, CallNotes = record.ActivityDescription })
+                 .Select(record => new SiebelCallNotes { PersonID = record.PersonID, CallNotes = record.ActivityDescription, ActivityCreatedDate = record.ActivityCreatedDate })
                  .ToList();
             // store the count of items that actually have CallNotes
             _countofCallNotes = _siebelCallNotes?.Count ?? 0;
@@ -99,12 +99,14 @@ namespace api_process_runner_api.Helpers.Parsers
             return _siebelCallNotes.FirstOrDefault(note => note.PersonID == personID);
         }
 
-        public List<SiebelCallNotes> FindAllSiebelCallNotesByPersonID(string personID)
+        public List<SiebelCallNotes> FindAllSiebelCallNotesByPersonIDLastFirst(string personID)
         {
             if (_siebelCallNotes == null)
                 return new List<SiebelCallNotes>(); // If _siebelCallNotes is null, return an empty list
 
-            return _siebelCallNotes.Where(note => note.PersonID == personID).ToList();
+            return _siebelCallNotes.Where(note => note.PersonID == personID)
+                .OrderByDescending(note => note.ActivityCreatedDate)
+                .ToList();
         }
 
     }

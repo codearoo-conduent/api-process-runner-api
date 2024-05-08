@@ -11,6 +11,6 @@ namespace api_process_runner_api.Models
     {
         public string? PersonID { get; set; }
         public string? CallNotes { get; set; }
-        public string? ActivityCreatedDate {  get; set; }
+        public DateTime? ActivityCreatedDate {  get; set; }
     }
 }

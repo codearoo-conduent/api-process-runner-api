@@ -13,7 +13,8 @@ namespace api_process_runner_api.Models
         public string? ProgramName;
         public string? PersonID;
 
-        public string? ActivityCreatedDate;
+        [FieldConverter(ConverterKind.Date, "dd-MMM-yyyy HH:mm:ss")]
+        public DateTime? ActivityCreatedDate;
         public string? ActivityType;
 
         [FieldOptional]
