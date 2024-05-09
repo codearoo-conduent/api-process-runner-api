@@ -196,12 +196,13 @@ namespace api_process_runner_api.Util
 
             // We need to loop through all the items that have a match in Giact DB for step 3 now
             // This logic could be moved into a function/method to simplify this section of code.
-            if (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB != null && (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.Count() > 0))
+            if (Globals.inputEppicRecordsInGiactDBNotInHospitalsDB != null)
             {
                 // Let's add the items that have a match in Hospital DB to the Log Collection
-                var eppicRecordsInGiactDB = Globals.inputEppicRecordsInGiactDBNotInHospitalsDB.ToList();
-                foreach (var record in eppicRecordsInGiactDB)
+                foreach (var record in Globals.inputEppicRecordsInGiactDBNotInHospitalsDB)
                 {
+                    Console.WriteLine($"Doing Step 3 for PersonID: { record.PersonID }");
+
                     // get a ref to the sibeldataRecords first
                     //var siebeldataRecords = _datahelper.SiebelDataRecords;
                     var recordswithCallNotes = datahelper.SiebelDataParser.FindAllSiebelCallNotesByPersonIDLastFirst(record.PersonID ?? "");
@@ -262,7 +263,7 @@ namespace api_process_runner_api.Util
                         fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
                         fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
                         fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
-                        _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
+                        
                         verificationConclusionResultRecord.PersonID = record?.PersonID;
                         verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
                         verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
@@ -312,33 +313,8 @@ namespace api_process_runner_api.Util
                                 eppicStepResultRecord.LastStepCompleted = "Step3a";
                                 eppicStepResultRecord.Status = "Eppic Record Auth=OTP Check phone number for match in EPPIC or GIACT not found - Fail - Fraduelant Request ";
                                
-                                fraudConclusionResultRecord.PersonID = record.PersonID;
-                                fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
-                                fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
-                                fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
-                              
-                                verificationConclusionResultRecord.PersonID = record?.PersonID;
-                                verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
-                                verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
-                                verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
-                                verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
-
-                                actionConclusionResultRecord.PersonID = record?.PersonID;
-                                actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
-                                actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
-                                actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
-                                actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
-                                actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
-                                actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
-                                actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
-                                actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
-                                actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
-                                actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
                                 // Add record to the collections
-                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
-                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
-                                _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
-                                _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
+                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord);
                             }
                             else
                             {
@@ -358,33 +334,8 @@ namespace api_process_runner_api.Util
                                 eppicStepResultRecord.LastStepCompleted = "Step3a";
                                 eppicStepResultRecord.Status = "Eppic Record Auth=OTP Check found phone number match in EPPIC or GIACT - PASS ";
 
-                                fraudConclusionResultRecord.PersonID = record.PersonID;
-                                fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
-                                fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
-                                fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
-
-                                verificationConclusionResultRecord.PersonID = record?.PersonID;
-                                verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
-                                verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
-                                verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
-                                verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
-
-                                actionConclusionResultRecord.PersonID = record?.PersonID;
-                                actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
-                                actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
-                                actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
-                                actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
-                                actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
-                                actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
-                                actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
-                                actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
-                                actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
-                                actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
                                 // Add record to the collections
-                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
-                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
-                                _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
-                                _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
+                                _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord);
                             }
                         }
                         #endregion
@@ -412,36 +363,9 @@ namespace api_process_runner_api.Util
                         eppicStepResultRecord.Step3aPassedOTPPhoneGiact = false;
                         eppicStepResultRecord.LastStepCompleted = "Step3";
                         eppicStepResultRecord.Status = "Eppic Record Verifications were not complete based on SIEBEL call notes. FAIL - fraudelant request";
-                        var fraudConclusionResultRecord = new FraudConclusion();
-                        var actionConclusionResultRecord = new ActionConclusion();
-                        var verificationConclusionResultRecord = new VerificationConclusion();
-                        fraudConclusionResultRecord.PersonID = record.PersonID;
-                        fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
-                        fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
-                        fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
 
-                        verificationConclusionResultRecord.PersonID = record?.PersonID;
-                        verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
-                        verificationConclusionResultRecord.FormOfAuthentication = verificationConclusion?.FormOfAuthentication;
-                        verificationConclusionResultRecord.PhoneNumber = verificationConclusion?.PhoneNumber;
-                        verificationConclusionResultRecord.VerificationsCompleted = verificationConclusion?.VerificationsCompleted;
-
-                        actionConclusionResultRecord.PersonID = record?.PersonID;
-                        actionConclusionResultRecord.CallerAuthenticated = actionConclusion?.CallerAuthenticated;
-                        actionConclusionResultRecord.FormOfAuthentication = actionConclusion?.FormOfAuthentication;
-                        actionConclusionResultRecord.ThirdPartyInvolved = actionConclusion?.ThirdPartyInvolved;
-                        actionConclusionResultRecord.WasCallTransferred = actionConclusion?.WasCallTransferred;
-                        actionConclusionResultRecord.PhoneUpdateFrom = actionConclusion?.PhoneUpdateFrom;
-                        actionConclusionResultRecord.PhoneUpdateTo = actionConclusion?.PhoneUpdateTo;
-                        actionConclusionResultRecord.PhoneChanged = actionConclusion?.PhoneChanged;
-                        actionConclusionResultRecord.AddressUpdateFrom = actionConclusion?.AddressUpdateFrom;
-                        actionConclusionResultRecord.AddressUpdateTo = actionConclusion?.AddressUpdateTo;
-                        actionConclusionResultRecord.AddressChanged = actionConclusion?.AddressChanged;
                         // Add record to the collections
-                        _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord); // Add the result to the collection
-                        _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord);
-                        _verificationconclusionmanager.AddOrUpdateVerificationConclusion(verificationConclusionResultRecord);
-                        _actionconclusionmanager.AddOrUpdateActionConclusion(actionConclusionResultRecord);
+                        _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord);
                     }
                 }
             }
