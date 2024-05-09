@@ -216,7 +216,6 @@ namespace api_process_runner_api.Util
                     // JsonSerrializer can thow an exception so really need a try/catch
                     FraudConclusion? fraudConclusion = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson);
 
-
                     var verificationConclusionJson = await callLogChecker.CheckVerificationIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
                     // JsonSerrializer can thow an exception so really need a try/catch
                     VerificationConclusion? verificationConclusion = JsonSerializer.Deserialize<VerificationConclusion>(verificationConclusionJson);
@@ -260,9 +259,9 @@ namespace api_process_runner_api.Util
                         var verificationConclusionResultRecord = new VerificationConclusion();
                         // Call to CSV Manager to log the data to the collection
                         fraudConclusionResultRecord.PersonID = record.PersonID;
-                        fraudConclusionResultRecord.FraudConclusionNote = fraudConclusion?.FraudConclusionNote;
-                        fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType;
-                        fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation;
+                        fraudConclusionResultRecord.FraudConclusionNotes = fraudConclusion?.FraudConclusionNotes?.Replace(",",";");  
+                        fraudConclusionResultRecord.FraudConclusionType = fraudConclusion?.FraudConclusionType?.Replace(",", ";");
+                        fraudConclusionResultRecord.Recommendation = fraudConclusion?.Recommendation?.Replace(",", ";");
                         
                         verificationConclusionResultRecord.PersonID = record?.PersonID;
                         verificationConclusionResultRecord.ActivityRelatedTo = verificationConclusion?.ActivityRelatedTo;
@@ -298,6 +297,19 @@ namespace api_process_runner_api.Util
                             // if the check doesn't pass, the request is determined to be fraud
                             if (!step3aPass)
                             {
+                                // We need to call the AI for FraudConclusion one more time because in previous calls the AI does not know if the record passed the 3a check since
+                                // we haven't got here yet.  We need to let the AI that this record has passed or failed Step3a.
+                                var fraudConclusionJson3a = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "",true,false);
+                                // JsonSerrializer can thow an exception so really need a try/catch
+                                FraudConclusion? fraudConclusion3a = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson3a);
+
+
+                                var fraudConclusionResultRecord3a = new FraudConclusion();
+                                fraudConclusionResultRecord3a.PersonID = record.PersonID;
+                                fraudConclusionResultRecord3a.FraudConclusionNotes = fraudConclusion3a?.FraudConclusionNotes?.Replace(",", ";");
+                                fraudConclusionResultRecord3a.FraudConclusionType = fraudConclusion3a?.FraudConclusionType?.Replace(",", ";");
+                                fraudConclusionResultRecord3a.Recommendation = fraudConclusion3a?.Recommendation?.Replace(",", ";");
+
                                 stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification but phone number does not match the phone number in EPPIC or GIACT", "FAIL - fraudelant request");
                                 eppicStepResultRecord.PersonID = record.PersonID;
                                 eppicStepResultRecord.PhoneNumber = record.Phone_Number;
@@ -315,10 +327,20 @@ namespace api_process_runner_api.Util
                                
                                 // Add record to the collections
                                 _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord);
+                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord3a);
                             }
                             else
                             {
                                 stepLogger.AddItem(record, "Step 3a - OTP Pass ID Verification, phone number matches the phone number in EPPIC or GIACT", "PASS");
+                                var fraudConclusionJson3a = await callLogChecker.CheckFraudIntentAsync(_kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "", true, true);
+                                FraudConclusion? fraudConclusion3a = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionJson3a);
+
+
+                                var fraudConclusionResultRecord3a = new FraudConclusion();
+                                fraudConclusionResultRecord3a.PersonID = record.PersonID;
+                                fraudConclusionResultRecord3a.FraudConclusionNotes = fraudConclusion3a?.FraudConclusionNotes?.Replace(",", ";");
+                                fraudConclusionResultRecord3a.FraudConclusionType = fraudConclusion3a?.FraudConclusionType?.Replace(",", ";");
+                                fraudConclusionResultRecord3a.Recommendation = fraudConclusion3a?.Recommendation?.Replace(",", ";");
                                 // Call to CSV Manager to log the data to the collection
                                 eppicStepResultRecord.PersonID = record.PersonID;
                                 eppicStepResultRecord.PhoneNumber = record.Phone_Number;
@@ -336,6 +358,7 @@ namespace api_process_runner_api.Util
 
                                 // Add record to the collections
                                 _eppicstepresultsmanager.AddOrUpdateEppicStepResult(eppicStepResultRecord);
+                                _fraudconclusionmanager.AddOrUpdateFraudConclusion(fraudConclusionResultRecord3a);
                             }
                         }
                         #endregion

@@ -59,21 +59,26 @@ namespace api_process_runner_api.Util
 
 
         private string _promptFraudConclusion = @"PersonID: {{$personid}}
+        InStep3a: {{$instep3a}}
+        PassedStep3a: {{$passedstep3a}}
         {{$query}}
 
-         Return the Fraud Conclusion intent of the query. The Fraud Conclusion must be in the format of JSON that consists of FraudConclusionNotes, FraudConclusionType, Recommendation properties. The FraudConclusionNotes should a short summary based on your review of the query.  The FraudConclusionType should be either 'No Fraud Detected' or 'Possible Account Takeover'.  The Recommendation should be your recommendations for futher action based on your conclusions. The JSON format should be:
+        Return the Fraud Conclusion intent of the query. The Fraud Conclusion must be in the format of JSON that consists of FraudConclusionNotes, FraudConclusionType, Recommendation properties. The FraudConclusionNotes should a short summary based on your review of the query.  The FraudConclusionType should be either 'No Fraud Detected' or 'Possible Account Takeover'.  The Recommendation should be your recommendations for futher action based on your conclusions. 
+        If InStep3a is false, then PassedStep3a has no impact on your logic.  If InStep3a is true and PassedStep3a is true, this means the the PersonID has passed all verificaiton steps and the form of authentication was 'One Time Passcode' and it should be noted in the FraudCOnclusionNotes that this record passed Step3a and therefore should not be considered fraud. If based on the settings of InStep3a and PassedStep3a it's concluded this record is NOT fraud
+        then this should be reflected in the Recommendation, FraudConclusionNotes and FraudConclusionType.
+        The JSON format should be:
         [JSON]
                {
                   'PersonID': '12345',
                   'FraudConclusionNotes': '<conclusion>',
                   'FraudConclusionType' : 'No Fraud Detected',
-                  'Recommendation': <recommendation>'
+                  'Recommendation': '<recommendation>'
                }
         [JSON END]
 
         [Examples for JSON Output]
              { 
-              'PersonID':'12345', 
+             'PersonID':'12345', 
              'FraudConclusionNotes': 'There are multiple red flags suggesting potential fraud, including changes in contact information, inquiries about card information and transaction history, alert updates indicating possible account takeover',
              'FraudConclusionType': 'Account Takeover'
              'Recommendation': 'Further investigation and monitoring of the account are warranted to confirm fraudulent activity.'
@@ -146,7 +151,7 @@ namespace api_process_runner_api.Util
             return result ?? "";
         }
 
-        public async Task<string> CheckFraudIntentAsync(Kernel kernel, string personid, string query)
+        public async Task<string> CheckFraudIntentAsync(Kernel kernel, string personid, string query,bool instep3a = false,  bool passedstep3a = false)
         {
 #pragma warning disable SKEXP0010
 
@@ -155,7 +160,7 @@ namespace api_process_runner_api.Util
                 ResponseFormat = "json_object", // setting JSON output mode
             };
 
-            KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid } };
+            KernelArguments arguments2 = new(executionSettings) { { "query", query }, { "personid", personid }, { "instep3a", instep3a }, { "passedstep3a", passedstep3a } };
             string result = "";
             try
             {

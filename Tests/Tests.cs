@@ -55,7 +55,7 @@ namespace api_process_runner_api.Tests
             var fraudConclusionRecord = new FraudConclusion
             {
                 PersonID = "1234",
-                FraudConclusionNote = "This is a test",
+                FraudConclusionNotes = "This is a test",
                 FraudConclusionType = "Account Takeover",
                 Recommendation = "Testing"
             };
@@ -99,7 +99,7 @@ Sebiel PersonID: {siebelrecord}
 -----------------------------------
 Fraud Conclusion Details
 Fraud Conclusion Type: {fraudConclustion?.FraudConclusionType}
-Fraud Conclusion Note: {fraudConclustion?.FraudConclusionNote}
+Fraud Conclusion Note: {fraudConclustion?.FraudConclusionNotes}
 Recommendation: {fraudConclustion?.Recommendation}
 -----------------------------------
 Verification Conclusion Details
