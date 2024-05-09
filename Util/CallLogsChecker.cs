@@ -135,6 +135,7 @@ namespace api_process_runner_api.Util
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
+                Console.WriteLine("SK ,- CheckVerificationIntent");
                 var response = await kernel.InvokePromptAsync(_promptVerificationConclusion, arguments2);
                 result = response.GetValue<string>() ?? "";
             }
@@ -159,6 +160,7 @@ namespace api_process_runner_api.Util
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
+                Console.WriteLine("SK ,- CheckFraudIntent");
                 var response = await kernel.InvokePromptAsync(_promptFraudConclusion, arguments2);
                 result = response.GetValue<string>() ?? "";
             }
@@ -183,6 +185,7 @@ namespace api_process_runner_api.Util
             try
             {
                 // KernelArguments arguments = new(new OpenAIPromptExecutionSettings { ResponseFormat = "json_object" }) { { "query", query } };
+                Console.WriteLine("SK ,- CheckActionConclusionIntent");
                 var response = await kernel.InvokePromptAsync(_promptActionConclusion, arguments2);
                 result = response.ToString() ?? "";
             }

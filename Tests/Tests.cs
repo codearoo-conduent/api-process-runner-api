@@ -2,6 +2,11 @@
 using api_process_runner_api.Models.Reporting;
 using api_process_runner_api.Models;
 using api_process_runner_api.Helpers;
+using Azure.Storage.Blobs.Models;
+using api_process_runner_api.Util;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.SemanticKernel;
+using System.Text.Json;
 
 namespace api_process_runner_api.Tests
 {
@@ -75,6 +80,46 @@ namespace api_process_runner_api.Tests
             _fraudconclusionmanager.WriteToCsv(Constants.UseLocalFiles);
             _verificationconclusionmanager.WriteToCsv(Constants.UseLocalFiles);
             return "Finished Testing";
+        }
+
+        public static async Task<string> TestAICall(DataHelper dataHelper, Kernel kernel, string siebelrecord)
+        {
+            // var result = await TestAICall(dataHelper, kernel, "6488958";
+            CallLogChecker callLogChecker = new CallLogChecker();
+            var siebeldataRecords = dataHelper.SiebelDataRecords;
+            var recordswithCallNotes = dataHelper.SiebelDataParser.FindAllSiebelCallNotesByPersonIDLastFirst(siebelrecord);
+            var fraudConclusionResult = await callLogChecker.CheckFraudIntentAsync(kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+            var verificationConclusionResult = await callLogChecker.CheckVerificationIntentAsync(kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+            var actionConclusionResult = await callLogChecker.CheckActionConclusionAsync(kernel, recordswithCallNotes?.FirstOrDefault()?.PersonID ?? "", recordswithCallNotes?.FirstOrDefault()?.CallNotes ?? "");
+            FraudConclusion? fraudConclustion = JsonSerializer.Deserialize<FraudConclusion>(fraudConclusionResult);
+            VerificationConclusion? verificationConclusion = JsonSerializer.Deserialize<VerificationConclusion>(verificationConclusionResult);
+            ActionConclusion? actionConclusion= JsonSerializer.Deserialize<ActionConclusion>(actionConclusionResult);
+            var output = $@"##########################################
+Sebiel PersonID: {siebelrecord}
+-----------------------------------
+Fraud Conclusion Details
+Fraud Conclusion Type: {fraudConclustion?.FraudConclusionType}
+Fraud Conclusion Note: {fraudConclustion?.FraudConclusionNote}
+Recommendation: {fraudConclustion?.Recommendation}
+-----------------------------------
+Verification Conclusion Details
+Form of Auth: {verificationConclusion?.FormOfAuthentication}
+Activity Related To: {verificationConclusion?.ActivityRelatedTo}
+Verifications Completed: {verificationConclusion?.VerificationsCompleted}
+-----------------------------------
+Action Conclusion Details
+Third Party Involved: {actionConclusion?.ThirdPartyInvolved}
+Phone Changed: {actionConclusion?.PhoneChanged}
+Address Changed: {actionConclusion?.AddressChanged}
+Was Call Transferred: {actionConclusion?.WasCallTransferred}
+Caller Authenticated: {actionConclusion?.CallerAuthenticated}
+-----------------------------------";
+            Console.WriteLine(output);
+            Console.WriteLine("##########################################");
+            Console.WriteLine("Seible Call Notes");
+            Console.WriteLine("-----------------------------------");
+            Console.WriteLine(recordswithCallNotes?.FirstOrDefault()?.CallNotes);
+            return "Finished Test AI Calls";
         }
     }
 }
