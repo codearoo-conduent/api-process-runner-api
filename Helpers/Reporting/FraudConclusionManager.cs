@@ -23,7 +23,7 @@ namespace api_process_runner_api.Helpers.Reporting
             else
             {
                 // Update existing item
-                existingItem.FraudConclusionNote = newItem.FraudConclusionNote;
+                existingItem.FraudConclusionNotes = newItem.FraudConclusionNotes;
                 existingItem.FraudConclusionType = newItem.FraudConclusionType;
                 existingItem.Recommendation = newItem.Recommendation;
             }
